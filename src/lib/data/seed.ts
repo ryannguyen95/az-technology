@@ -124,7 +124,6 @@ const subCats: CatalogEntry[] = [
           { title: "Bảo hành tận nơi", text: "Hỗ trợ kỹ thuật toàn quốc." },
           { title: "Tư vấn cấu hình", text: "Đề xuất theo đúng nhu cầu sử dụng." },
         ]},
-        { type: "brandStrip", title: "Hãng cung cấp", brandSlugs: (bnds as string[]).map((b) => b.toLowerCase()) },
         CTA("Cần báo giá thiết bị?"),
       ] }),
 );
@@ -147,7 +146,6 @@ const dcCats: CatalogEntry[] = [
           { title: "Chuẩn doanh nghiệp", text: "Thiết bị hiệu năng cao, độ sẵn sàng lớn." },
           { title: "Triển khai trọn gói", text: "Khảo sát, lắp đặt, cấu hình, nghiệm thu." },
         ]},
-        ...(bnds as string[]).length ? [{ type: "brandStrip" as const, title: "Hãng cung cấp", brandSlugs: (bnds as string[]).map((b) => b.toLowerCase()) }] : [],
         CTA("Cần tư vấn hạ tầng Data Center?"),
       ] }),
 );
@@ -255,7 +253,6 @@ const software: CatalogEntry[] = softwareRaw.map(([title, slug, brand, icon, t])
           { title: "Tuân thủ & an toàn", text: "Cập nhật bảo mật đầy đủ, không rủi ro pháp lý." },
           { title: "Hỗ trợ chính hãng", text: "Được hỗ trợ kỹ thuật trực tiếp từ nhà cung cấp." },
         ]},
-        { type: "brandStrip", title: "Hãng", brandSlugs: [brand] },
         CTA(`Nhận báo giá ${title}`),
       ] }),
 );

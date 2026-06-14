@@ -152,6 +152,13 @@ export function EntryDetail({ entry, crumbs }: { entry: CatalogEntry; crumbs: { 
           {entry.body.map((b, i) => <BlockView key={i} block={b} />)}
         </div>
       ) : null}
+
+      {/* Brand strip from the entry's brand relation (both seed + Strapi modes) */}
+      {entry.brandSlugs?.length ? (
+        <div className="mt-10">
+          <BlockView block={{ type: "brandStrip", title: "Hãng cung cấp", brandSlugs: entry.brandSlugs }} />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "banners",
+  "info": { "singularName": "banner", "pluralName": "banners", "displayName": "Banner / Hero Slide" },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "eyebrow": { "type": "string" },
+    "highlight": { "type": "string" },
+    "subtitle": { "type": "text" },
+    "ctaLabel": { "type": "string" },
+    "ctaHref": { "type": "string" },
+    "image": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "gradientTone": { "type": "enumeration", "enum": ["blue", "cyan", "green", "navy", "red"], "default": "blue" },
+    "order": { "type": "integer", "default": 0 },
+    "active": { "type": "boolean", "default": true }
+  }
+}

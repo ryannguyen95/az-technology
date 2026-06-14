@@ -1,0 +1,9 @@
+{
+  "collectionName": "components_blocks_ctas",
+  "info": { "displayName": "CTA", "icon": "cursor" },
+  "options": {},
+  "attributes": {
+    "heading": { "type": "string", "required": true },
+    "sub": { "type": "text" }
+  }
+}

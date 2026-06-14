@@ -1,0 +1,17 @@
+{
+  "kind": "collectionType",
+  "collectionName": "quote_requests",
+  "info": { "singularName": "quote-request", "pluralName": "quote-requests", "displayName": "Quote Request" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "phone": { "type": "string", "required": true },
+    "email": { "type": "email", "required": true },
+    "company": { "type": "string" },
+    "interest": { "type": "string" },
+    "message": { "type": "text" },
+    "sourcePage": { "type": "string" },
+    "consentGiven": { "type": "boolean", "default": false },
+    "status": { "type": "enumeration", "enum": ["new", "contacted", "closed"], "default": "new" }
+  }
+}
