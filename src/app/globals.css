@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AZ Technology — base styles & brand utilities (ported from handoff styles.css) */
+:root {
+  --az-primary: #0056b3;
+  --az-cyan: #00d1ff;
+  --az-navy: #002d5a;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  color: #0f1b2d;
+  background: #f8fafc;
+}
+
+@layer utilities {
+  /* Brand gradients */
+  .az-grad {
+    background: linear-gradient(120deg, var(--az-primary) 0%, #0a78d6 48%, var(--az-cyan) 130%);
+  }
+  .az-grad-navy {
+    background: linear-gradient(125deg, var(--az-navy) 0%, #064b8e 60%, var(--az-primary) 120%);
+  }
+  .az-grad-soft {
+    background: linear-gradient(120deg, #eef6ff 0%, #e6fbff 100%);
+  }
+  /* Decorative gradient text — used for display headings only, on light bg.
+     Falls back to primary so it never becomes low-contrast. */
+  .az-text-grad {
+    background: linear-gradient(100deg, var(--az-primary), #0093bd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Mesh / dotted texture for hero */
+  .az-mesh {
+    background-image: radial-gradient(60% 80% at 85% 8%, rgba(0, 209, 255, 0.3), transparent 60%),
+      radial-gradient(45% 60% at 12% 95%, rgba(0, 209, 255, 0.16), transparent 60%);
+  }
+  .az-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+  }
+  .az-dots-ink {
+    background-image: radial-gradient(rgba(0, 45, 90, 0.07) 1px, transparent 1.4px);
+    background-size: 20px 20px;
+  }
+  .az-container {
+    width: 100%;
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+}
+
+/* Visible focus ring for accessibility (design review Pass 6) */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--az-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
