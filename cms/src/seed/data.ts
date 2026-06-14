@@ -133,7 +133,9 @@ const softwareRaw: [string, string, string, string, string][] = [
 const software: SeedEntry[] = softwareRaw.map(([title, slug, brand, icon, t]): SeedEntry => ({
   kind: "software", title, slug, icon, tone: t, brandSlugs: [brand],
   summary: `${title} — bản quyền chính hãng, tư vấn cấp phép theo quy mô doanh nghiệp.`,
-  body: [FEAT("Vì sao chọn bản quyền", [
+  body: [
+    { __component: "blocks.rich-text", heading: "Mô tả sản phẩm", html: `<p><strong>${title}</strong> là giải pháp bản quyền chính hãng, phù hợp cho doanh nghiệp mọi quy mô. AZ Technology tư vấn cấp phép, triển khai và hỗ trợ kỹ thuật trọn gói.</p><ul><li>Bản quyền chính hãng, hóa đơn VAT đầy đủ.</li><li>Cấp phép linh hoạt theo số lượng người dùng.</li><li>Hỗ trợ cài đặt và đào tạo sử dụng.</li></ul>` },
+    FEAT("Vì sao chọn bản quyền", [
     { title: "Tuân thủ & an toàn", text: "Cập nhật bảo mật đầy đủ, không rủi ro pháp lý." },
     { title: "Hỗ trợ chính hãng", text: "Được hỗ trợ kỹ thuật trực tiếp từ nhà cung cấp." },
   ]), CTA(`Nhận báo giá ${title}`)],

@@ -1,8 +1,12 @@
 {
   "collectionName": "components_blocks_rich_texts",
-  "info": { "displayName": "Rich Text", "icon": "align-left" },
+  "info": { "displayName": "Rich Text (HTML)", "icon": "align-left" },
   "options": {},
   "attributes": {
-    "html": { "type": "richtext" }
+    "heading": { "type": "string" },
+    "html": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor"
+    }
   }
 }

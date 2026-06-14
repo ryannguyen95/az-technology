@@ -22,7 +22,7 @@ type RawBlock = Record<string, unknown> & { __component: string };
 function mapBlock(b: RawBlock): Block | null {
   switch (b.__component) {
     case "blocks.rich-text":
-      return { type: "richText", html: String(b.html ?? "") };
+      return { type: "richText", heading: b.heading as string | undefined, html: String(b.html ?? "") };
     case "blocks.feature-list":
       return { type: "featureList", title: b.title as string | undefined,
         items: ((b.items as { title: string; text?: string }[]) ?? []).map((i) => ({ title: i.title, text: i.text })) };

@@ -7,7 +7,7 @@ export type Tone = "blue" | "cyan" | "green" | "red" | "navy";
 
 // Dynamic-zone blocks — each entry composes only what it needs.
 export type Block =
-  | { type: "richText"; html: string }
+  | { type: "richText"; heading?: string; html: string }
   | { type: "featureList"; title?: string; items: { title: string; text?: string }[] }
   | { type: "specAccordion"; title?: string; rows: { label: string; value: string }[] }
   | { type: "processSteps"; title?: string; steps: { title: string; text?: string }[] }

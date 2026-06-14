@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Block, CatalogEntry } from "@/lib/types";
 import { getBrands } from "@/lib/data";
+import { cleanHtml } from "@/lib/sanitize";
 import { Icon } from "./Icon";
 import { PriceTag } from "./PriceTag";
 import { RatingStars } from "./RatingStars";
@@ -24,8 +25,19 @@ export function Breadcrumb({ items }: { items: { label: string; href?: string }[
 
 function BlockView({ block }: { block: Block }) {
   switch (block.type) {
-    case "richText":
-      return <div className="prose max-w-none text-ink/80" dangerouslySetInnerHTML={{ __html: block.html }} />;
+    case "richText": {
+      const html = cleanHtml(block.html ?? "");
+      if (!html.trim()) return null; // hide when empty
+      return (
+        <section>
+          {block.heading && <h2 className="mb-3 text-xl font-extrabold text-navy">{block.heading}</h2>}
+          <div
+            className="prose prose-slate max-w-none prose-headings:text-navy prose-a:text-primary"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </section>
+      );
+    }
     case "featureList":
       return (
         <div>

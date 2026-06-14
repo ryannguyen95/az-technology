@@ -87,11 +87,13 @@ export interface BlocksProcessSteps extends Struct.ComponentSchema {
 export interface BlocksRichText extends Struct.ComponentSchema {
   collectionName: 'components_blocks_rich_texts';
   info: {
-    displayName: 'Rich Text';
+    displayName: 'Rich Text (HTML)';
     icon: 'align-left';
   };
   attributes: {
-    html: Schema.Attribute.RichText;
+    heading: Schema.Attribute.String;
+    html: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<'plugin::ckeditor5.CKEditor'>;
   };
 }
 
