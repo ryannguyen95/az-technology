@@ -158,12 +158,15 @@ export function EntryDetail({ entry, crumbs }: { entry: CatalogEntry; crumbs: { 
           </div>
         </div>
       </div>
-      {/* Body blocks */}
-      {entry.body?.length ? (
-        <div className="mt-10 space-y-8">
-          {entry.body.map((b, i) => <BlockView key={i} block={b} />)}
-        </div>
-      ) : null}
+      {/* Structured blocks (features, process, specs, faq, cta) — the middle of the page */}
+      {(() => {
+        const structured = (entry.body ?? []).filter((b) => b.type !== "richText");
+        return structured.length ? (
+          <div className="mt-10 space-y-8">
+            {structured.map((b, i) => <BlockView key={i} block={b} />)}
+          </div>
+        ) : null;
+      })()}
 
       {/* Brand strip from the entry's brand relation (both seed + Strapi modes) */}
       {entry.brandSlugs?.length ? (
@@ -171,6 +174,16 @@ export function EntryDetail({ entry, crumbs }: { entry: CatalogEntry; crumbs: { 
           <BlockView block={{ type: "brandStrip", title: "Hãng cung cấp", brandSlugs: entry.brandSlugs }} />
         </div>
       ) : null}
+
+      {/* Long-form content section — ALWAYS LAST, just above the footer (softvn style) */}
+      {(() => {
+        const rich = (entry.body ?? []).filter((b) => b.type === "richText");
+        return rich.length ? (
+          <section className="mt-12 border-t border-ink/10 pt-10 space-y-8">
+            {rich.map((b, i) => <BlockView key={i} block={b} />)}
+          </section>
+        ) : null;
+      })()}
     </div>
   );
 }

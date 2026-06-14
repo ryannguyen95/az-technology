@@ -134,14 +134,54 @@ const software: SeedEntry[] = softwareRaw.map(([title, slug, brand, icon, t]): S
   kind: "software", title, slug, icon, tone: t, brandSlugs: [brand],
   summary: `${title} — bản quyền chính hãng, tư vấn cấp phép theo quy mô doanh nghiệp.`,
   body: [
-    { __component: "blocks.rich-text", heading: "Mô tả sản phẩm", html: `<p><strong>${title}</strong> là giải pháp bản quyền chính hãng, phù hợp cho doanh nghiệp mọi quy mô. AZ Technology tư vấn cấp phép, triển khai và hỗ trợ kỹ thuật trọn gói.</p><ul><li>Bản quyền chính hãng, hóa đơn VAT đầy đủ.</li><li>Cấp phép linh hoạt theo số lượng người dùng.</li><li>Hỗ trợ cài đặt và đào tạo sử dụng.</li></ul>` },
     FEAT("Vì sao chọn bản quyền", [
     { title: "Tuân thủ & an toàn", text: "Cập nhật bảo mật đầy đủ, không rủi ro pháp lý." },
     { title: "Hỗ trợ chính hãng", text: "Được hỗ trợ kỹ thuật trực tiếp từ nhà cung cấp." },
   ]), CTA(`Nhận báo giá ${title}`)],
 }));
 
-export const ENTRIES: SeedEntry[] = [...groups, ...subCats, ...dcCats, ...services, ...solutions, ...software];
+// Long-form content (softvn-style) appended as the last section of each detail page.
+const AZ_COMMIT = `<h3>Cam kết từ AZ Technology</h3><ul><li>Hàng chính hãng / bản quyền 100%, xuất hóa đơn VAT đầy đủ.</li><li>Tư vấn giải pháp tối ưu theo đúng nhu cầu và quy mô doanh nghiệp.</li><li>Triển khai nhanh, hỗ trợ kỹ thuật toàn quốc và đồng hành lâu dài.</li></ul>`;
+const AZ_CONTACT = `<p>Liên hệ AZ Technology qua hotline <strong>0703 594 402</strong> hoặc email <strong>nhu.trang@az-technology.vn</strong> để được tư vấn và nhận báo giá chính xác nhất.</p>`;
+
+function contentHTML(kind: string, title: string): string {
+  if (kind === "software") {
+    return `<p><strong>${title}</strong> là phần mềm bản quyền chính hãng, được nhiều doanh nghiệp tin dùng để chuẩn hoá công cụ làm việc, bảo mật dữ liệu và tuân thủ pháp lý. AZ Technology là đối tác cung cấp, tư vấn cấp phép và triển khai ${title} cho doanh nghiệp tại Việt Nam.</p>
+<h3>Vì sao nên dùng bản quyền ${title}?</h3>
+<ul><li>Tuân thủ pháp lý, tránh rủi ro khi bị kiểm tra bản quyền.</li><li>Luôn nhận đầy đủ bản vá bảo mật và tính năng mới nhất.</li><li>Được nhà sản xuất hỗ trợ kỹ thuật chính thức.</li><li>Xuất hóa đơn VAT, thuận tiện cho quyết toán doanh nghiệp.</li></ul>
+<h3>Các phiên bản & cấp phép</h3>
+<p>${title} có nhiều phiên bản và hình thức cấp phép khác nhau theo số lượng người dùng và nhu cầu sử dụng. AZ Technology sẽ tư vấn gói phù hợp nhất để tối ưu chi phí.</p>
+${AZ_COMMIT}${AZ_CONTACT}`;
+  }
+  if (kind === "solution") {
+    return `<p><strong>${title}</strong> là giải pháp được AZ Technology tư vấn, thiết kế và triển khai trọn gói cho doanh nghiệp — từ khảo sát hiện trạng đến vận hành và bảo trì.</p>
+<h3>Lợi ích cho doanh nghiệp</h3>
+<ul><li>Hạ tầng ổn định, an toàn và sẵn sàng mở rộng.</li><li>Tối ưu chi phí đầu tư và vận hành.</li><li>Giảm rủi ro gián đoạn, bảo vệ dữ liệu quan trọng.</li><li>Được đội ngũ kỹ thuật giàu kinh nghiệm đồng hành.</li></ul>
+<h3>Quy trình triển khai</h3>
+<ol><li>Tư vấn & khảo sát hiện trạng.</li><li>Thiết kế giải pháp phù hợp.</li><li>Triển khai & lắp đặt.</li><li>Nghiệm thu & bàn giao.</li><li>Bảo trì & hỗ trợ sau triển khai.</li></ol>
+${AZ_COMMIT}${AZ_CONTACT}`;
+  }
+  if (kind === "service") {
+    return `<p><strong>${title}</strong> giúp doanh nghiệp vận hành hệ thống CNTT ổn định, giảm tải cho đội ngũ nội bộ và xử lý sự cố nhanh chóng. AZ Technology cung cấp dịch vụ linh hoạt theo nhu cầu thực tế.</p>
+<h3>Vì sao chọn AZ Technology</h3>
+<ul><li>Đội ngũ kỹ thuật giàu kinh nghiệm, phản hồi nhanh.</li><li>Cam kết SLA rõ ràng, minh bạch.</li><li>Phạm vi dịch vụ linh hoạt, mở rộng theo nhu cầu.</li><li>Hỗ trợ từ xa và tại chỗ trên toàn quốc.</li></ul>
+${AZ_COMMIT}${AZ_CONTACT}`;
+  }
+  return `<p>Danh mục <strong>${title}</strong> tại AZ Technology cung cấp thiết bị, sản phẩm chính hãng cùng dịch vụ tư vấn — triển khai — bảo hành đi kèm cho doanh nghiệp.</p>
+<h3>Vì sao mua tại AZ Technology</h3>
+<ul><li>Sản phẩm chính hãng, đầy đủ hóa đơn VAT.</li><li>Tư vấn cấu hình đúng nhu cầu, tối ưu chi phí.</li><li>Giao hàng và lắp đặt nhanh trên toàn quốc.</li><li>Bảo hành và hỗ trợ kỹ thuật lâu dài.</li></ul>
+${AZ_COMMIT}${AZ_CONTACT}`;
+}
+
+const RAW_ENTRIES: SeedEntry[] = [...groups, ...subCats, ...dcCats, ...services, ...solutions, ...software];
+
+export const ENTRIES: SeedEntry[] = RAW_ENTRIES.map((e) => ({
+  ...e,
+  body: [
+    ...(e.body ?? []).filter((b: any) => b.__component !== "blocks.rich-text"),
+    { __component: "blocks.rich-text", heading: `Thông tin chi tiết về ${e.title}`, html: contentHTML(e.kind, e.title) },
+  ],
+}));
 
 export const HERO = {
   title: "Hạ tầng số", highlight: "vững chắc", eyebrow: "Giải pháp CNTT toàn diện",
