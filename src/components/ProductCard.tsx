@@ -5,6 +5,7 @@ import { Icon } from "./Icon";
 import { PriceTag } from "./PriceTag";
 import { RatingStars } from "./RatingStars";
 import { QuoteButton } from "./QuoteButton";
+import { stripHtml } from "@/lib/strip";
 
 const TONE_GRAD: Record<string, string> = {
   blue: "from-primary-600 to-cyan-500",
@@ -45,7 +46,7 @@ export function ProductCard({ entry }: { entry: CatalogEntry }) {
         <Link href={href} className="line-clamp-2 font-bold text-navy hover:text-primary">
           {entry.title}
         </Link>
-        {entry.summary && <p className="mt-1 line-clamp-2 text-sm text-ink/60">{entry.summary}</p>}
+        {entry.summary && <p className="mt-1 line-clamp-2 text-sm text-ink/60">{stripHtml(entry.summary)}</p>}
         <div className="mt-2"><RatingStars rating={entry.rating ?? 5} reviews={entry.reviews} /></div>
         <div className="mt-auto pt-3"><PriceTag entry={entry} /></div>
         <div className="mt-3 flex gap-2">

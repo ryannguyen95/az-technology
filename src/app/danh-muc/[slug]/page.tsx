@@ -6,6 +6,7 @@ import {
   getEntriesByKind, getEntryForPrefix, getChildren, getBrands,
 } from "@/lib/data";
 import { entryHref } from "@/lib/routing";
+import { stripHtml } from "@/lib/strip";
 
 export const revalidate = 3600; // time-based ISR backstop (eng review T2)
 
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (slug === "phan-mem") return { title: "Phần mềm bản quyền" };
   const e = await getEntryForPrefix("danh-muc", slug);
   if (!e) return {};
-  return { title: e.seo?.metaTitle ?? e.title, description: e.seo?.metaDescription ?? e.summary };
+  return { title: e.seo?.metaTitle ?? e.title, description: e.seo?.metaDescription ?? stripHtml(e.summary) };
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {

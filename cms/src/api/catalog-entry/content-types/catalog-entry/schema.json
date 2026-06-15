@@ -22,7 +22,11 @@
     "icon": { "type": "string" },
     "tone": { "type": "enumeration", "enum": ["blue", "cyan", "green", "navy", "red"], "default": "blue" },
     "badge": { "type": "string" },
-    "summary": { "type": "text" },
+    "summary": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": { "preset": "defaultHtml" }
+    },
     "coverImage": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
     "gallery": { "type": "media", "multiple": true, "allowedTypes": ["images"] },
     "featured": { "type": "boolean", "default": false },

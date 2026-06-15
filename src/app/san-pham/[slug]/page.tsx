@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { EntryDetail } from "@/components/EntryDetail";
 import { getEntriesByKind, getEntryForPrefix } from "@/lib/data";
 import { formatVND } from "@/lib/format";
+import { stripHtml } from "@/lib/strip";
 
 export const revalidate = 3600;
 
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const e = await getEntryForPrefix("san-pham", slug);
   if (!e) return {};
-  return { title: e.seo?.metaTitle ?? e.title, description: e.seo?.metaDescription ?? e.summary };
+  return { title: e.seo?.metaTitle ?? e.title, description: e.seo?.metaDescription ?? stripHtml(e.summary) };
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
@@ -28,7 +29,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     "@context": "https://schema.org",
     "@type": "Product",
     name: entry.title,
-    description: entry.summary,
+    description: stripHtml(entry.summary),
   };
   if (entry.priceMode === "show" && formatVND(entry.priceNew)) {
     ld.offers = {

@@ -98,7 +98,12 @@ export function EntryDetail({ entry, crumbs }: { entry: CatalogEntry; crumbs: { 
           {entry.badge && <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-bold text-primary">{entry.badge}</span>}
           <h1 className="mt-2 text-2xl font-extrabold text-navy md:text-3xl">{entry.title}</h1>
           <div className="mt-2"><RatingStars rating={entry.rating ?? 5} reviews={entry.reviews} /></div>
-          {entry.summary && <p className="mt-3 text-ink/70">{entry.summary}</p>}
+          {entry.summary && (
+            <div
+              className="prose prose-sm mt-3 max-w-none text-ink/70 prose-headings:text-navy prose-a:text-primary"
+              dangerouslySetInnerHTML={{ __html: cleanHtml(entry.summary) }}
+            />
+          )}
           <div className="mt-4 rounded-xl2 border border-ink/10 bg-white p-4">
             <PriceTag entry={entry} />
             <p className="mt-1 text-xs text-ink/50">Giá trên website mang tính tham khảo. Vui lòng liên hệ để nhận báo giá chính xác — giá tùy cấu hình / số lượng.</p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntryDetail } from "@/components/EntryDetail";
 import { getEntriesByKind, getEntryForPrefix } from "@/lib/data";
+import { stripHtml } from "@/lib/strip";
 
 export const revalidate = 3600;
 
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const e = await getEntryForPrefix("dich-vu", slug);
   if (!e) return {};
-  return { title: e.seo?.metaTitle ?? e.title, description: e.seo?.metaDescription ?? e.summary };
+  return { title: e.seo?.metaTitle ?? e.title, description: e.seo?.metaDescription ?? stripHtml(e.summary) };
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {

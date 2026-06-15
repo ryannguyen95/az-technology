@@ -577,7 +577,13 @@ export interface ApiCatalogEntryCatalogEntry
     reviews: Schema.Attribute.Integer;
     seo: Schema.Attribute.Component<'seo.meta', false>;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
-    summary: Schema.Attribute.Text;
+    summary: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'defaultHtml';
+        }
+      >;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     tone: Schema.Attribute.Enumeration<
       ['blue', 'cyan', 'green', 'navy', 'red']

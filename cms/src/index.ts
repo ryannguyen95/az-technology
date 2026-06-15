@@ -97,7 +97,14 @@ export default {
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     try {
       await setPublicPermissions(strapi);
-      if (process.env.SEED !== "false") await seed(strapi);
+      // Seed ONCE (only when empty) so manual edits in the admin are never
+      // overwritten on restart. Force a re-seed with SEED=force; skip with SEED=false.
+      const existing = await strapi.db.query("api::catalog-entry.catalog-entry").count();
+      if (process.env.SEED === "force" || (existing === 0 && process.env.SEED !== "false")) {
+        await seed(strapi);
+      } else {
+        strapi.log.info(`[seed] skipped (${existing} entries already exist; SEED=force to reseed)`);
+      }
     } catch (err) {
       strapi.log.error("[seed] bootstrap failed: " + (err as Error).message);
     }
