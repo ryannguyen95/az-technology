@@ -1,9 +1,0 @@
-{
-  "collectionName": "components_blocks_feature_items",
-  "info": { "displayName": "Feature Item", "icon": "check" },
-  "options": {},
-  "attributes": {
-    "title": { "type": "string", "required": true },
-    "text": { "type": "text" }
-  }
-}

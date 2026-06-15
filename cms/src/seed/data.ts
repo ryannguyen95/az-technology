@@ -175,12 +175,10 @@ ${AZ_COMMIT}${AZ_CONTACT}`;
 
 const RAW_ENTRIES: SeedEntry[] = [...groups, ...subCats, ...dcCats, ...services, ...solutions, ...software];
 
+// Each detail page has exactly one content section (the long-form rich text).
 export const ENTRIES: SeedEntry[] = RAW_ENTRIES.map((e) => ({
   ...e,
-  body: [
-    ...(e.body ?? []).filter((b: any) => b.__component !== "blocks.rich-text"),
-    { __component: "blocks.rich-text", heading: `Thông tin chi tiết về ${e.title}`, html: contentHTML(e.kind, e.title) },
-  ],
+  body: [{ __component: "blocks.rich-text", heading: `Thông tin chi tiết về ${e.title}`, html: contentHTML(e.kind, e.title) }],
 }));
 
 export const HERO = {

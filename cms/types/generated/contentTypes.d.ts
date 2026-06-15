@@ -529,14 +529,7 @@ export interface ApiCatalogEntryCatalogEntry
   attributes: {
     badge: Schema.Attribute.String;
     body: Schema.Attribute.DynamicZone<
-      [
-        'blocks.rich-text',
-        'blocks.feature-list',
-        'blocks.spec-accordion',
-        'blocks.process-steps',
-        'blocks.faq',
-        'blocks.cta',
-      ]
+      ['blocks.rich-text', 'blocks.spec-accordion', 'blocks.faq']
     >;
     brands: Schema.Attribute.Relation<'manyToMany', 'api::brand.brand'>;
     children: Schema.Attribute.Relation<

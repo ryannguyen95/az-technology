@@ -38,40 +38,6 @@ function BlockView({ block }: { block: Block }) {
         </section>
       );
     }
-    case "featureList":
-      return (
-        <div>
-          {block.title && <h3 className="mb-3 text-lg font-bold text-navy">{block.title}</h3>}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {block.items.map((it, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-lg border border-ink/10 bg-white p-4">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary">
-                  <Icon name="check" className="h-4 w-4" />
-                </span>
-                <div>
-                  <div className="font-semibold text-navy">{it.title}</div>
-                  {it.text && <div className="text-sm text-ink/60">{it.text}</div>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    case "processSteps":
-      return (
-        <div>
-          {block.title && <h3 className="mb-3 text-lg font-bold text-navy">{block.title}</h3>}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {block.steps.map((s, i) => (
-              <div key={i} className="rounded-xl2 border border-ink/10 bg-white p-4">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full az-grad font-bold text-white">{i + 1}</span>
-                <div className="mt-2 font-semibold text-navy">{s.title}</div>
-                {s.text && <div className="text-sm text-ink/60">{s.text}</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-      );
     case "specAccordion":
       return (
         <div>
@@ -114,16 +80,6 @@ function BlockView({ block }: { block: Block }) {
         </div>
       );
     }
-    case "cta":
-      return (
-        <div className="rounded-xl2 az-grad-soft p-6 text-center">
-          <h3 className="text-xl font-extrabold text-navy">{block.heading}</h3>
-          {block.sub && <p className="mt-1 text-ink/60">{block.sub}</p>}
-          <QuoteButton className="mt-4 inline-flex rounded-lg az-grad px-6 py-3 font-bold text-white shadow-cardHover hover:opacity-95">
-            Gửi yêu cầu tư vấn
-          </QuoteButton>
-        </div>
-      );
   }
 }
 

@@ -23,23 +23,12 @@ function mapBlock(b: RawBlock): Block | null {
   switch (b.__component) {
     case "blocks.rich-text":
       return { type: "richText", heading: b.heading as string | undefined, html: String(b.html ?? "") };
-    case "blocks.feature-list":
-      return { type: "featureList", title: b.title as string | undefined,
-        items: ((b.items as { title: string; text?: string }[]) ?? []).map((i) => ({ title: i.title, text: i.text })) };
     case "blocks.spec-accordion":
       return { type: "specAccordion", title: b.title as string | undefined,
         rows: ((b.rows as { label: string; value: string }[]) ?? []) };
-    case "blocks.process-steps":
-      return { type: "processSteps", title: b.title as string | undefined,
-        steps: ((b.steps as { title: string; text?: string }[]) ?? []) };
     case "blocks.faq":
       return { type: "faq", title: b.title as string | undefined,
         items: ((b.items as { q: string; a: string }[]) ?? []) };
-    case "blocks.brand-strip":
-      return { type: "brandStrip", title: b.title as string | undefined,
-        brandSlugs: ((b.brands as { slug: string }[]) ?? []).map((x) => x.slug) };
-    case "blocks.cta":
-      return { type: "cta", heading: String(b.heading ?? ""), sub: b.sub as string | undefined };
     default:
       return null;
   }

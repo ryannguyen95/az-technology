@@ -72,23 +72,6 @@ export const whyAZ = [
   { title: "Hỗ trợ kỹ thuật lâu dài", text: "Đồng hành sau bán hàng, phản hồi nhanh." },
 ];
 
-const PROCESS = {
-  type: "processSteps" as const,
-  title: "Quy trình triển khai",
-  steps: [
-    { title: "Tư vấn", text: "Khảo sát nhu cầu, đề xuất giải pháp phù hợp." },
-    { title: "Triển khai", text: "Lên kế hoạch và thực thi theo cam kết." },
-    { title: "Lắp đặt", text: "Cài đặt, cấu hình, nghiệm thu tại chỗ." },
-    { title: "Hỗ trợ sau bán hàng", text: "Bảo trì, giám sát và hỗ trợ lâu dài." },
-  ],
-};
-
-const CTA = (heading: string) => ({
-  type: "cta" as const,
-  heading,
-  sub: "Để lại thông tin, AZ Technology phản hồi trong vòng 24 giờ.",
-});
-
 // helper to build an entry
 function E(e: Partial<CatalogEntry> & Pick<CatalogEntry, "kind" | "slug" | "title">): CatalogEntry {
   return { priceMode: "contact", ...e };
@@ -117,15 +100,7 @@ const subCats: CatalogEntry[] = [
 ].map(([title, slug, icon, bnds], i) =>
   E({ kind: "category", slug: slug as string, title: title as string, parentSlug: "thiet-bi-van-phong",
       icon: icon as string, tone: tone(i), brandSlugs: (bnds as string[]).map((b) => b.toLowerCase()),
-      summary: `${title} chính hãng, bảo hành đầy đủ, tư vấn cấu hình theo nhu cầu.`,
-      body: [
-        { type: "featureList", title: "Điểm nổi bật", items: [
-          { title: "Hàng chính hãng", text: "Nhập khẩu, đầy đủ hóa đơn VAT." },
-          { title: "Bảo hành tận nơi", text: "Hỗ trợ kỹ thuật toàn quốc." },
-          { title: "Tư vấn cấu hình", text: "Đề xuất theo đúng nhu cầu sử dụng." },
-        ]},
-        CTA("Cần báo giá thiết bị?"),
-      ] }),
+      summary: `${title} chính hãng, bảo hành đầy đủ, tư vấn cấu hình theo nhu cầu.` }),
 );
 
 // Data Center sub-categories
@@ -140,14 +115,7 @@ const dcCats: CatalogEntry[] = [
 ].map(([title, slug, icon, bnds], i) =>
   E({ kind: "category", slug: slug as string, title: title as string, parentSlug: "data-center",
       icon: icon as string, tone: tone(i + 1), brandSlugs: (bnds as string[]).map((b) => b.toLowerCase()),
-      summary: `${title} cho hạ tầng doanh nghiệp, tư vấn — triển khai — bảo trì trọn gói.`,
-      body: [
-        { type: "featureList", title: "Điểm nổi bật", items: [
-          { title: "Chuẩn doanh nghiệp", text: "Thiết bị hiệu năng cao, độ sẵn sàng lớn." },
-          { title: "Triển khai trọn gói", text: "Khảo sát, lắp đặt, cấu hình, nghiệm thu." },
-        ]},
-        CTA("Cần tư vấn hạ tầng Data Center?"),
-      ] }),
+      summary: `${title} cho hạ tầng doanh nghiệp, tư vấn — triển khai — bảo trì trọn gói.` }),
 );
 
 /* ── Services (kind=service) ── */
@@ -160,12 +128,7 @@ const itServices: CatalogEntry[] = [
      "Quản trị hệ thống Azure"]],
 ].map(([title, slug, icon, items], i) =>
   E({ kind: "service", slug: slug as string, title: title as string, icon: icon as string, tone: tone(i),
-      summary: `${title}: ${(items as string[]).slice(0, 3).join(" · ")}…`,
-      body: [
-        { type: "featureList", title: "Phạm vi dịch vụ", items: (items as string[]).map((t) => ({ title: t })) },
-        PROCESS,
-        CTA(`Cần tư vấn ${(title as string).toLowerCase()}?`),
-      ] }),
+      summary: `${title}: ${(items as string[]).slice(0, 3).join(" · ")}…` }),
 );
 
 /* ── Solutions (kind=solution) — 7 groups with feature bullets ── */
@@ -221,12 +184,7 @@ const solutionsRaw: Sol[] = [
 const solutions: CatalogEntry[] = solutionsRaw.map(([title, slug, icon, t, items], i) =>
   E({ kind: "solution", slug, title, icon, tone: t, order: i + 1, featured: i < 4,
       badge: i === 0 ? "Tiêu biểu" : undefined,
-      summary: `${(items[0] || "").slice(0, 80)}…`,
-      body: [
-        { type: "featureList", title: "Hạng mục giải pháp", items: items.map((x) => ({ title: x })) },
-        PROCESS,
-        CTA(`Cần tư vấn ${title.toLowerCase()}?`),
-      ] }),
+      summary: `${(items[0] || "").slice(0, 80)}…` }),
 );
 
 /* ── Software (kind=software), representative vendor-grouped set ── */
@@ -247,14 +205,7 @@ const softwareRaw: Sw[] = [
 ];
 const software: CatalogEntry[] = softwareRaw.map(([title, slug, brand, icon, t]) =>
   E({ kind: "software", slug, title, icon, tone: t, brandSlugs: [brand],
-      summary: `${title} — bản quyền chính hãng, tư vấn cấp phép theo quy mô doanh nghiệp.`,
-      body: [
-        { type: "featureList", title: "Vì sao chọn bản quyền", items: [
-          { title: "Tuân thủ & an toàn", text: "Cập nhật bảo mật đầy đủ, không rủi ro pháp lý." },
-          { title: "Hỗ trợ chính hãng", text: "Được hỗ trợ kỹ thuật trực tiếp từ nhà cung cấp." },
-        ]},
-        CTA(`Nhận báo giá ${title}`),
-      ] }),
+      summary: `${title} — bản quyền chính hãng, tư vấn cấp phép theo quy mô doanh nghiệp.` }),
 );
 
 // ── Long-form content generator (softvn-style), rendered as the last
@@ -296,14 +247,11 @@ const rawEntries: CatalogEntry[] = [
   ...groups, ...subCats, ...dcCats, ...itServices, ...solutions, ...software,
 ];
 
-// Append the long-form content block to every entry (replacing any prior richText).
-// EntryDetail renders richText blocks as the final section, above the footer.
+// Each detail page has exactly one content section (the long-form rich text),
+// rendered as the last section above the footer.
 export const entries: CatalogEntry[] = rawEntries.map((e) => ({
   ...e,
-  body: [
-    ...(e.body ?? []).filter((b) => b.type !== "richText"),
-    { type: "richText", heading: `Thông tin chi tiết về ${e.title}`, html: contentHTML(e.kind, e.title) },
-  ],
+  body: [{ type: "richText", heading: `Thông tin chi tiết về ${e.title}`, html: contentHTML(e.kind, e.title) }],
 }));
 
 // Mega-menu IA derived from the real taxonomy (design review Pass 1).

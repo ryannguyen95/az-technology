@@ -1,9 +1,0 @@
-{
-  "collectionName": "components_blocks_process_steps",
-  "info": { "displayName": "Process Steps", "icon": "arrowRight" },
-  "options": {},
-  "attributes": {
-    "title": { "type": "string" },
-    "steps": { "type": "component", "repeatable": true, "component": "blocks.process-step" }
-  }
-}
