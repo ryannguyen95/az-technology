@@ -13,10 +13,10 @@
     "title": { "type": "string", "required": true },
     "slug": { "type": "uid", "targetField": "title", "required": true },
     "kind": {
-      "type": "enumeration",
-      "enum": ["category", "solution", "service", "software", "product"],
-      "required": true,
-      "default": "category"
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::entry-kind.entry-kind",
+      "inversedBy": "entries"
     },
     "order": { "type": "integer", "default": 0 },
     "icon": { "type": "string" },

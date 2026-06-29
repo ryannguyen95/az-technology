@@ -1,57 +1,98 @@
-import Link from "next/link";
-import type { HeroSlide } from "@/lib/types";
-import { Icon } from "./Icon";
-import { QuoteButton } from "./QuoteButton";
+"use client";
 
-export function Hero({ slide }: { slide: HeroSlide }) {
+import Link from "next/link";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import type { HeroBanner } from "@/lib/types";
+import { Icon } from "./Icon";
+
+function FallbackHero() {
+  // Shown until an editor uploads at least one banner image in the CMS.
   return (
-    <section className="relative overflow-hidden az-grad text-white">
-      <div className="absolute inset-0 az-mesh" />
-      <div className="absolute inset-0 az-dots opacity-50" />
-      <div className="az-container relative grid gap-10 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
-        <div className="animate-fadeUp">
-          {slide.eyebrow && (
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" /> {slide.eyebrow}
-            </span>
-          )}
-          <h1 className="mt-4 text-4xl font-extrabold leading-tight md:text-5xl">
-            {slide.title} {slide.highlight && <span className="text-cyan-300">{slide.highlight}</span>}
-            <br />cho mọi quy mô
-          </h1>
-          {slide.subtitle && <p className="mt-4 max-w-xl text-base text-white/85 md:text-lg">{slide.subtitle}</p>}
-          <div className="mt-7 flex flex-wrap gap-3">
-            <QuoteButton className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-bold text-primary shadow-cardHover transition hover:bg-cyan-50">
-              Tư vấn miễn phí <Icon name="arrow" className="h-4 w-4" />
-            </QuoteButton>
-            <Link href={slide.ctaHref}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/40 px-6 py-3 font-bold text-white transition hover:bg-white/10">
-              {slide.ctaLabel}
+    <section className="pt-7 pb-3">
+      <div className="max-w-site mx-auto px-4">
+        <div className="relative overflow-hidden rounded-[28px] az-grad-soft border border-primary-100 shadow-card px-8 py-14 lg:py-20 text-center">
+          <div className="absolute inset-0 az-dots-ink opacity-50" />
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur border border-primary-100 rounded-full px-3.5 py-1.5 text-[12px] font-extrabold text-primary mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" /> Giải pháp CNTT toàn diện
+            </div>
+            <h1 className="text-3xl sm:text-4xl xl:text-[44px] font-extrabold leading-[1.08] tracking-tight text-navy">
+              Hạ tầng số <span className="az-text-grad">vững chắc</span> cho mọi quy mô
+            </h1>
+            <p className="mt-4 text-[14.5px] sm:text-base text-slate-600 max-w-xl mx-auto">
+              Phần mềm bản quyền · Phần cứng chính hãng · Hạ tầng Data Center · Dịch vụ IT &amp; Cloud.
+            </p>
+            <Link
+              href="/danh-muc/phan-mem"
+              className="mt-7 inline-flex items-center gap-2 bg-primary text-white font-bold text-sm rounded-full pl-5 pr-4 py-3 shadow-[0_10px_24px_-8px_rgba(0,86,179,.7)] hover:bg-primary-700 transition-all"
+            >
+              Khám phá sản phẩm <Icon name="arrowRight" className="w-4 h-4" />
             </Link>
           </div>
-          <div className="mt-9 flex gap-8">
-            <div><div className="text-3xl font-extrabold">12+</div><div className="text-sm text-white/70">năm kinh nghiệm</div></div>
-            <div><div className="text-3xl font-extrabold">1.500+</div><div className="text-sm text-white/70">doanh nghiệp tin dùng</div></div>
-          </div>
         </div>
-        <div className="relative hidden lg:block">
-          <div className="ml-auto w-[420px] rounded-xl2 bg-white/10 p-6 shadow-pop backdrop-blur animate-floaty">
-            <div className="flex items-center gap-2 rounded-lg bg-white/90 p-3 text-navy">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-emerald-100 text-emerald-600"><Icon name="check" className="h-5 w-5" /></span>
-              <div><div className="text-sm font-bold">Bản quyền 100%</div><div className="text-xs text-ink/50">Xuất hóa đơn VAT</div></div>
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {["server", "cloud", "shield", "windows", "backup", "monitor"].map((ic) => (
-                <div key={ic} className="flex h-16 items-center justify-center rounded-lg bg-white/15">
-                  <Icon name={ic} className="h-7 w-7 text-white" />
-                </div>
+      </div>
+    </section>
+  );
+}
+
+export function Hero({ banners }: { banners?: HeroBanner[] }) {
+  const slides = (banners ?? []).filter((b) => b.image);
+  const [i, setI] = useState(0);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const id = setInterval(() => setI((p) => (p + 1) % slides.length), 5500);
+    return () => clearInterval(id);
+  }, [slides.length]);
+
+  if (!slides.length) return <FallbackHero />;
+
+  const i2 = Math.min(i, slides.length - 1);
+
+  return (
+    <section className="pt-7 pb-3">
+      <div className="max-w-site mx-auto px-4">
+        <div className="relative overflow-hidden rounded-[28px] shadow-card">
+          {slides.map((b, k) => {
+            const inner = (
+              <Image
+                src={b.image as string}
+                alt={b.title}
+                fill
+                priority={k === 0}
+                sizes="(min-width: 1240px) 1240px, 100vw"
+                className="object-cover"
+              />
+            );
+            return (
+              <div
+                key={b.id}
+                className={`relative h-[200px] sm:h-[300px] lg:h-[380px] transition-opacity duration-500 ${k === i2 ? "opacity-100" : "opacity-0 absolute inset-0 pointer-events-none"}`}
+              >
+                {b.ctaHref ? (
+                  <Link href={b.ctaHref} aria-label={b.ctaLabel || b.title} className="block w-full h-full">
+                    {inner}
+                  </Link>
+                ) : (
+                  inner
+                )}
+              </div>
+            );
+          })}
+
+          {slides.length > 1 && (
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 flex gap-2">
+              {slides.map((_, k) => (
+                <button
+                  key={k}
+                  onClick={() => setI(k)}
+                  aria-label={`Banner ${k + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${k === i2 ? "w-7 bg-white" : "w-2.5 bg-white/50 hover:bg-white/80"}`}
+                />
               ))}
             </div>
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/90 p-3 text-navy">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-50 text-primary"><Icon name="phone" className="h-5 w-5" /></span>
-              <div><div className="text-sm font-bold">Hỗ trợ 24/7</div><div className="text-xs text-ink/50">Toàn quốc</div></div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

@@ -457,12 +457,6 @@ export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     ctaHref: Schema.Attribute.String;
     ctaLabel: Schema.Attribute.String;
-    eyebrow: Schema.Attribute.String;
-    gradientTone: Schema.Attribute.Enumeration<
-      ['blue', 'cyan', 'green', 'navy', 'red']
-    > &
-      Schema.Attribute.DefaultTo<'blue'>;
-    highlight: Schema.Attribute.String;
     image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -472,7 +466,6 @@ export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     publishedAt: Schema.Attribute.DateTime;
-    subtitle: Schema.Attribute.Text;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -543,11 +536,7 @@ export interface ApiCatalogEntryCatalogEntry
     featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     gallery: Schema.Attribute.Media<'images', true>;
     icon: Schema.Attribute.String;
-    kind: Schema.Attribute.Enumeration<
-      ['category', 'solution', 'service', 'software', 'product']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'category'>;
+    kind: Schema.Attribute.Relation<'manyToOne', 'api::entry-kind.entry-kind'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -589,6 +578,43 @@ export interface ApiCatalogEntryCatalogEntry
       ['blue', 'cyan', 'green', 'navy', 'red']
     > &
       Schema.Attribute.DefaultTo<'blue'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiEntryKindEntryKind extends Struct.CollectionTypeSchema {
+  collectionName: 'entry_kinds';
+  info: {
+    description: 'Editable list of catalog-entry kinds (category, solution, service, software, product\u2026).';
+    displayName: 'Entry Kind';
+    pluralName: 'entry-kinds';
+    singularName: 'entry-kind';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    entries: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::catalog-entry.catalog-entry'
+    >;
+    key: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    label: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::entry-kind.entry-kind'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1215,6 +1241,7 @@ declare module '@strapi/strapi' {
       'api::banner.banner': ApiBannerBanner;
       'api::brand.brand': ApiBrandBrand;
       'api::catalog-entry.catalog-entry': ApiCatalogEntryCatalogEntry;
+      'api::entry-kind.entry-kind': ApiEntryKindEntryKind;
       'api::news.news': ApiNewsNews;
       'api::quote-request.quote-request': ApiQuoteRequestQuoteRequest;
       'api::site-setting.site-setting': ApiSiteSettingSiteSetting;

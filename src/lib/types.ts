@@ -47,6 +47,15 @@ export interface Brand {
   website?: string;
 }
 
+// Image-only hero banner: one uploaded image + a CTA link (managed in the CMS).
+export interface HeroBanner {
+  id: string;
+  title: string;
+  image: string | null;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
 export interface HeroSlide {
   id: string;
   eyebrow?: string;

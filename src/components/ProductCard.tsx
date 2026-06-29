@@ -1,63 +1,64 @@
-import Link from "next/link";
-import type { CatalogEntry } from "@/lib/types";
-import { entryHref } from "@/lib/routing";
-import { Icon } from "./Icon";
-import { PriceTag } from "./PriceTag";
+"use client";
+
+import { useRouter } from "next/navigation";
+import type { CardProduct } from "@/lib/card";
+import { ProductImage } from "./ProductImage";
 import { RatingStars } from "./RatingStars";
-import { QuoteButton } from "./QuoteButton";
-import { stripHtml } from "@/lib/strip";
+import { useQuote } from "./QuoteModal";
 
-const TONE_GRAD: Record<string, string> = {
-  blue: "from-primary-600 to-cyan-500",
-  cyan: "from-cyan-500 to-primary-600",
-  green: "from-emerald-500 to-cyan-500",
-  navy: "from-navy to-primary-600",
-  red: "from-rose-500 to-primary-600",
-};
-
-// Branded placeholder for image-less entries (design review Pass 4) —
-// a subtle brand gradient + the category icon + AZ wordmark. NOT icon-in-a-circle.
-function Thumb({ entry }: { entry: CatalogEntry }) {
-  const grad = TONE_GRAD[entry.tone ?? "blue"];
+export function ProductCard({ product }: { product: CardProduct }) {
+  const router = useRouter();
+  const { openQuote } = useQuote();
+  const go = () => router.push(product.href);
   return (
-    <div className={`relative flex h-40 items-center justify-center overflow-hidden rounded-t-xl2 bg-gradient-to-br ${grad}`}>
-      <div className="absolute inset-0 az-dots opacity-40" />
-      <Icon name={entry.icon} className="h-14 w-14 text-white/90" />
-      <span className="absolute bottom-2 right-3 text-[11px] font-bold tracking-wide text-white/70">
-        AZ Technology
-      </span>
-      {entry.badge && (
-        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-primary shadow">
-          {entry.badge}
-        </span>
-      )}
-    </div>
-  );
-}
-
-export function ProductCard({ entry }: { entry: CatalogEntry }) {
-  const href = entryHref(entry.kind, entry.slug);
-  return (
-    <div className="group flex flex-col overflow-hidden rounded-xl2 bg-white shadow-card transition hover:shadow-cardHover">
-      <Link href={href} aria-label={entry.title}>
-        <Thumb entry={entry} />
-      </Link>
-      <div className="flex flex-1 flex-col p-4">
-        <Link href={href} className="line-clamp-2 font-bold text-navy hover:text-primary">
-          {entry.title}
-        </Link>
-        {entry.summary && <p className="mt-1 line-clamp-2 text-sm text-ink/60">{stripHtml(entry.summary)}</p>}
-        <div className="mt-2"><RatingStars rating={entry.rating ?? 5} reviews={entry.reviews} /></div>
-        <div className="mt-auto pt-3"><PriceTag entry={entry} /></div>
-        <div className="mt-3 flex gap-2">
-          <Link href={href}
-            className="flex-1 rounded-lg border border-primary/30 px-3 py-2 text-center text-sm font-semibold text-primary transition hover:bg-primary-50">
+    <div
+      onClick={go}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") go();
+      }}
+      className="az-card group cursor-pointer bg-white rounded-2xl border border-slate-200/80 hover:border-primary-200 shadow-card hover:shadow-cardHover flex flex-col overflow-hidden"
+    >
+      <div className="relative">
+        <ProductImage product={product} className="aspect-[4/3] bg-slate-50" />
+        {product.badge && (
+          <span
+            className={`absolute top-2.5 right-2.5 text-[11px] font-extrabold px-2 py-1 rounded-lg whitespace-nowrap ${
+              product.badge.startsWith("-") ? "bg-sale text-white" : "bg-cyan-400 text-navy"
+            }`}
+          >
+            {product.badge}
+          </span>
+        )}
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <div className="text-[11px] font-bold tracking-wide text-cyan-600 uppercase mb-1.5">{product.cat}</div>
+        <h3 className="font-bold text-navy text-[15px] leading-snug clamp-2 group-hover:text-primary transition-colors min-h-[42px]">
+          {product.name}
+        </h3>
+        <div className="mt-2 mb-4">
+          <RatingStars value={product.rating} reviews={product.reviews} />
+        </div>
+        <div className="mt-auto flex gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              go();
+            }}
+            className="flex-1 border border-slate-200 text-navy text-[12.5px] font-bold rounded-lg py-2.5 hover:border-primary hover:text-primary transition-colors"
+          >
             Xem chi tiết
-          </Link>
-          <QuoteButton interest={entry.title}
-            className="flex-1 rounded-lg az-grad px-3 py-2 text-center text-sm font-semibold text-white transition hover:opacity-95">
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openQuote({ mode: "quick", product: product.name });
+            }}
+            className="flex-1 bg-primary text-white text-[12.5px] font-bold rounded-lg py-2.5 hover:bg-primary-700 transition-colors"
+          >
             Nhận báo giá
-          </QuoteButton>
+          </button>
         </div>
       </div>
     </div>

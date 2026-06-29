@@ -1,26 +1,35 @@
-import type { CatalogEntry } from "@/lib/types";
-import { formatVND } from "@/lib/format";
+import type { CardProduct } from "@/lib/card";
 
-// Per-entry price mode (design review Pass 3). "contact" mode reframes the
-// missing price as value + speed, never an evasive blank.
-export function PriceTag({ entry }: { entry: CatalogEntry }) {
-  if (entry.priceMode === "show") {
-    const oldP = formatVND(entry.priceOld);
-    const newP = formatVND(entry.priceNew);
+function fmtVnd(n?: number | null) {
+  if (n == null) return "";
+  return n.toLocaleString("vi-VN") + "₫";
+}
+
+// Matches the design's PriceTag: contact / "from" / old+new variants.
+export function PriceTag({ product, size = "md" }: { product: CardProduct; size?: "md" | "lg" }) {
+  const big = size === "lg";
+  if (product.contact)
+    return (
+      <div className={`font-extrabold text-primary ${big ? "text-2xl" : "text-lg"}`}>Liên hệ báo giá</div>
+    );
+  if (product.from)
     return (
       <div className="flex items-baseline gap-2">
-        {newP && <span className="text-lg font-extrabold text-primary">{newP}</span>}
-        {oldP && newP && <span className="text-sm text-ink/40 line-through">{oldP}</span>}
-        {!newP && <span className="text-sm font-semibold text-primary">{entry.priceFromLabel ?? "Liên hệ báo giá"}</span>}
+        <span className={`font-extrabold text-primary ${big ? "text-2xl" : "text-lg"}`}>{product.from}</span>
       </div>
     );
-  }
   return (
-    <div>
-      <span className="text-sm font-semibold text-primary">
-        {entry.priceFromLabel ?? "Liên hệ báo giá"}
+    <div className="flex items-baseline gap-2 flex-wrap">
+      <span className={`font-extrabold text-primary ${big ? "text-3xl" : "text-lg"}`}>
+        {fmtVnd(product.priceNew)}
       </span>
-      <span className="ml-2 text-xs text-ink/50">phản hồi trong 24h</span>
+      {product.priceOld && (
+        <span className={`text-slate-400 line-through font-medium ${big ? "text-base" : "text-sm"}`}>
+          {fmtVnd(product.priceOld)}
+        </span>
+      )}
     </div>
   );
 }
+
+export { fmtVnd };

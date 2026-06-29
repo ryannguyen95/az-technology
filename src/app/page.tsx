@@ -1,29 +1,40 @@
 import { Hero } from "@/components/Hero";
-import { CategoryGrid, SectionRail, TrustStrip, PartnerStrip, FinalCTA } from "@/components/HomeSections";
-import { heroSlides, categoryTiles, whyAZ, getBrands, getEntriesByKind } from "@/lib/data";
+import { CategoryTilesSection, SubBanners, HomeProductSection } from "@/components/HomeSections";
+import { WhyAZ, PartnerMarquee } from "@/components/HomeStrips";
+import { CTAStrip } from "@/components/CTAStrip";
+import { getEntriesByKind, getFeatured, getChildren, getBanners } from "@/lib/data";
+import { toCard } from "@/lib/card";
 
 export default async function HomePage() {
-  const [software, solutions, services, hardware] = await Promise.all([
+  const [banners, featured, software, solutions, services, hardware] = await Promise.all([
+    getBanners(),
+    getFeatured(),
     getEntriesByKind("software"),
     getEntriesByKind("solution"),
     getEntriesByKind("service"),
-    getEntriesByKind("category"),
+    getChildren("thiet-bi-van-phong"),
   ]);
-  // featured solutions first
-  const featuredSolutions = solutions.filter((s) => s.featured);
+  const cards = (list: Awaited<ReturnType<typeof getFeatured>>) => list.slice(0, 5).map(toCard);
 
   return (
     <>
-      <Hero slide={heroSlides[0]} />
-      <CategoryGrid tiles={categoryTiles} />
-      <SectionRail title="Phần mềm bản quyền" entries={software} href="/danh-muc/phan-mem" />
-      <SectionRail title="Giải pháp doanh nghiệp" entries={featuredSolutions} href="/giai-phap/ha-tang-data-center" />
-      <SectionRail title="Dịch vụ IT & Data Center" entries={services} href="/dich-vu/dich-vu-it-co-ban" />
-      <SectionRail title="Thiết bị & phần cứng" entries={hardware.filter((c) => c.parentSlug)} href="/danh-muc/thiet-bi-van-phong" />
-      <TrustStrip items={whyAZ} />
-      <PartnerStrip brands={getBrands()} />
-      <FinalCTA />
-      <div className="h-4" />
+      <Hero banners={banners} />
+      <CategoryTilesSection />
+      <SubBanners />
+
+      <HomeProductSection kicker="Hot" title="SẢN PHẨM NỔI BẬT" viewAll="/danh-muc/phan-mem" products={cards(featured.length ? featured : software)} />
+      <div className="bg-white">
+        <HomeProductSection kicker="Doanh nghiệp" title="GIẢI PHÁP DOANH NGHIỆP" viewAll="/giai-phap/ha-tang-data-center" products={cards(solutions)} />
+      </div>
+      <HomeProductSection kicker="Bản quyền" title="PHẦN MỀM BẢN QUYỀN" viewAll="/danh-muc/phan-mem" products={cards(software)} />
+      <div className="bg-white">
+        <HomeProductSection kicker="Dịch vụ" title="DỊCH VỤ IT & DATA CENTER" viewAll="/dich-vu/dich-vu-it-co-ban" products={cards(services)} />
+      </div>
+      <HomeProductSection kicker="Văn phòng" title="PHẦN CỨNG VĂN PHÒNG" viewAll="/danh-muc/thiet-bi-van-phong" products={cards(hardware)} />
+
+      <WhyAZ />
+      <PartnerMarquee />
+      <CTAStrip />
     </>
   );
 }

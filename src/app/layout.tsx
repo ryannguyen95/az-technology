@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
-import { settings, nav } from "@/lib/data";
+import { settings } from "@/lib/data";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { FloatingButtons } from "@/components/FloatingButtons";
 import { QuoteProvider } from "@/components/QuoteModal";
+import { Reveal } from "@/components/Reveal";
 
 const manrope = Manrope({ subsets: ["latin", "vietnamese"], variable: "--font-manrope" });
 
@@ -44,10 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }} />
         <QuoteProvider>
-          <Header nav={nav} settings={settings} />
+          <Reveal />
+          <Header />
           <main>{children}</main>
-          <Footer settings={settings} />
-          <FloatingButtons settings={settings} />
+          <Footer />
+          <FloatingButtons />
         </QuoteProvider>
       </body>
     </html>

@@ -30,7 +30,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   // Virtual "phan-mem" group → list all software
   if (slug === "phan-mem") {
     const software = await getEntriesByKind("software");
-    return <Listing title="Phần mềm bản quyền" entries={software} brands={brands} />;
+    return (
+      <Listing
+        title="Phần mềm bản quyền"
+        entries={software}
+        brands={brands}
+        crumbs={[{ label: "Trang chủ", href: "/" }, { label: "Phần mềm" }]}
+      />
+    );
   }
 
   const entry = await getEntryForPrefix("danh-muc", slug);
@@ -38,7 +45,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   const children = await getChildren(slug);
   if (children.length) {
-    return <Listing title={entry.title} entries={children} brands={brands} />;
+    return (
+      <Listing
+        title={entry.title}
+        entries={children}
+        brands={brands}
+        crumbs={[{ label: "Trang chủ", href: "/" }, { label: entry.title }]}
+      />
+    );
   }
 
   const crumbs = [

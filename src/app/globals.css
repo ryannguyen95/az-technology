@@ -32,10 +32,8 @@ body {
   .az-grad-soft {
     background: linear-gradient(120deg, #eef6ff 0%, #e6fbff 100%);
   }
-  /* Decorative gradient text — used for display headings only, on light bg.
-     Falls back to primary so it never becomes low-contrast. */
   .az-text-grad {
-    background: linear-gradient(100deg, var(--az-primary), #0093bd);
+    background: linear-gradient(100deg, var(--az-primary), var(--az-cyan));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -59,11 +57,128 @@ body {
     margin-inline: auto;
     padding-inline: 1rem;
   }
+  /* Line clamp helpers */
+  .clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* Hide scrollbar utility (carousels) */
+  .no-sb::-webkit-scrollbar {
+    display: none;
+  }
+  .no-sb {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
-/* Visible focus ring for accessibility (design review Pass 6) */
+/* Cards */
+.az-card {
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+.az-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Reveal-on-scroll — transform-only so content is NEVER hidden (capture/print/paused-tab safe) */
+.reveal {
+  transform: translateY(22px);
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+.reveal.in {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transform: none !important;
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Mega menu animation */
+.mega-panel {
+  transform-origin: top center;
+}
+.mega-enter {
+  animation: megaIn 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes megaIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Skeleton shimmer for placeholder images */
+.az-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+.az-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: translateX(-100%);
+  animation: shimmerMove 1.8s infinite;
+}
+@keyframes shimmerMove {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Custom scrollbar inside mega menu columns */
+.az-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.az-scroll::-webkit-scrollbar-thumb {
+  background: #cdd9e7;
+  border-radius: 999px;
+}
+
+/* Marquee for partner logos */
+.az-marquee {
+  display: flex;
+  gap: 3.5rem;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+.az-marquee-wrap:hover .az-marquee {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Focus ring for accessibility */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--az-primary);
+  outline: 2px solid #00d1ff;
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }

@@ -1,150 +1,189 @@
-import Link from "next/link";
-import type { Block, CatalogEntry } from "@/lib/types";
-import { getBrands } from "@/lib/data";
-import { cleanHtml } from "@/lib/sanitize";
+import type { CatalogEntry } from "@/lib/types";
+import { toCard } from "@/lib/card";
+import { getEntriesByKind } from "@/lib/data";
+import { settings } from "@/lib/data";
 import { Icon } from "./Icon";
-import { PriceTag } from "./PriceTag";
+import { Breadcrumb } from "./Breadcrumb";
 import { RatingStars } from "./RatingStars";
-import { QuoteButton } from "./QuoteButton";
+import { PriceTag } from "./PriceTag";
+import { SectionHeading } from "./SectionHeading";
+import { EntryGallery } from "./EntryGallery";
+import { DetailActions } from "./DetailActions";
+import { DetailTabs } from "./DetailTabs";
+import { InlineQuoteForm } from "./InlineQuoteForm";
+import { CTAStrip } from "./CTAStrip";
+import { ProductCard } from "./ProductCard";
 
-export function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) {
+const tel = settings.hotline.replace(/\s/g, "");
+const BADGES = ["Bản quyền chính hãng", "Hóa đơn VAT", "Hỗ trợ 24/7 toàn quốc"];
+const BADGE_COLORS = [
+  "bg-cyan-50 text-cyan-700 border-cyan-200",
+  "bg-amber-50 text-amber-700 border-amber-200",
+  "bg-emerald-50 text-emerald-700 border-emerald-200",
+];
+
+function CommitmentBox() {
+  const items = [
+    "Sản phẩm / dịch vụ bản quyền chính hãng 100%",
+    "Xuất hóa đơn VAT đầy đủ",
+    "Hỗ trợ kỹ thuật lâu dài sau triển khai",
+    "Tư vấn miễn phí, báo giá nhanh trong ngày",
+  ];
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-ink/50">
-      <ol className="flex flex-wrap items-center gap-1.5">
-        <li><Link href="/" className="hover:text-primary">Trang chủ</Link></li>
-        {items.map((it, i) => (
-          <li key={i} className="flex items-center gap-1.5">
-            <span className="opacity-40">/</span>
-            {it.href ? <Link href={it.href} className="hover:text-primary">{it.label}</Link> : <span className="text-ink/70">{it.label}</span>}
+    <div className="rounded-2xl border border-primary-200 bg-primary-50/60 p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon name="badge" className="w-5 h-5 text-primary" stroke={1.6} />
+        <span className="font-extrabold text-navy text-[15px]">Cam kết từ AZ Technology</span>
+      </div>
+      <ul className="space-y-2.5 text-[13.5px]">
+        {items.map((t, i) => (
+          <li key={i} className="flex items-start gap-2 text-slate-600">
+            <Icon name="check" className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" stroke={2} />
+            {t}
           </li>
         ))}
-      </ol>
-    </nav>
+      </ul>
+      <div className="mt-4 pt-4 border-t border-primary-200/50 flex flex-col gap-2">
+        <a href={`tel:${tel}`} className="flex items-center gap-2 text-sm font-bold text-primary hover:text-primary-700 transition-colors">
+          <Icon name="phone" className="w-4 h-4" />
+          {settings.hotline} (Hotline)
+        </a>
+        <a href={`mailto:${settings.email}`} className="flex items-center gap-2 text-sm text-slate-600 hover:text-primary transition-colors">
+          <Icon name="mail" className="w-4 h-4" />
+          {settings.email}
+        </a>
+      </div>
+    </div>
   );
 }
 
-function BlockView({ block }: { block: Block }) {
-  switch (block.type) {
-    case "richText": {
-      const html = cleanHtml(block.html ?? "");
-      if (!html.trim()) return null; // hide when empty
-      return (
-        <section>
-          {block.heading && <h2 className="mb-3 text-xl font-extrabold text-navy">{block.heading}</h2>}
-          <div
-            className="prose prose-slate max-w-none prose-headings:text-navy prose-a:text-primary"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        </section>
-      );
-    }
-    case "specAccordion":
-      return (
-        <div>
-          {block.title && <h3 className="mb-3 text-lg font-bold text-navy">{block.title}</h3>}
-          <dl className="overflow-hidden rounded-xl2 border border-ink/10">
-            {block.rows.map((r, i) => (
-              <div key={i} className={`grid grid-cols-3 gap-4 p-3 text-sm ${i % 2 ? "bg-mist" : "bg-white"}`}>
-                <dt className="font-medium text-ink/60">{r.label}</dt>
-                <dd className="col-span-2 text-navy">{r.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      );
-    case "faq":
-      return (
-        <div>
-          {block.title && <h3 className="mb-3 text-lg font-bold text-navy">{block.title}</h3>}
-          <div className="space-y-2">
-            {block.items.map((f, i) => (
-              <details key={i} className="rounded-lg border border-ink/10 bg-white p-4">
-                <summary className="cursor-pointer font-semibold text-navy">{f.q}</summary>
-                <p className="mt-2 text-sm text-ink/70">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      );
-    case "brandStrip": {
-      const bs = getBrands(block.brandSlugs);
-      if (!bs.length) return null;
-      return (
-        <div>
-          {block.title && <h3 className="mb-3 text-lg font-bold text-navy">{block.title}</h3>}
-          <div className="flex flex-wrap gap-2">
-            {bs.map((b) => (
-              <span key={b.slug} className="rounded-lg border border-ink/10 bg-white px-3 py-1.5 text-sm font-semibold text-ink/60">{b.name}</span>
-            ))}
-          </div>
-        </div>
-      );
-    }
-  }
-}
-
-export function EntryDetail({ entry, crumbs }: { entry: CatalogEntry; crumbs: { label: string; href?: string }[] }) {
+function WhyLicensed({ hardware }: { hardware: boolean }) {
+  const items = hardware
+    ? [
+        { icon: "badge", t: "Thiết bị chính hãng", d: "Nguồn gốc rõ ràng, có tem nhãn và giấy tờ kiểm định theo hãng." },
+        { icon: "receipt", t: "Hóa đơn VAT đầy đủ", d: "Xuất hóa đơn điện tử hợp lệ, phục vụ kế toán doanh nghiệp." },
+        { icon: "truck", t: "Bảo hành chính hãng", d: "Thời gian bảo hành theo nhà sản xuất, có trung tâm bảo hành uy tín." },
+        { icon: "headset", t: "Hỗ trợ kỹ thuật", d: "Đội ngũ kỹ thuật viên hỗ trợ cài đặt, cấu hình và vận hành." },
+      ]
+    : [
+        { icon: "badge", t: "Bản quyền hợp pháp", d: "Tuân thủ pháp lý, tránh rủi ro kiểm tra vi phạm bản quyền." },
+        { icon: "shield", t: "Bảo mật & cập nhật", d: "Nhận bản vá bảo mật và nâng cấp tính năng định kỳ." },
+        { icon: "headset", t: "Hỗ trợ chính hãng", d: "Được hưởng hỗ trợ kỹ thuật từ nhà sản xuất và đại lý." },
+        { icon: "receipt", t: "Hóa đơn VAT hợp lệ", d: "Kê khai và khấu trừ thuế đúng quy định cho doanh nghiệp." },
+      ];
   return (
-    <div className="az-container py-8">
-      <Breadcrumb items={crumbs} />
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.5fr_1fr]">
-        {/* Left: visual */}
-        <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-xl2 az-grad md:h-80">
-          <div className="absolute inset-0 az-dots opacity-40" />
-          <Icon name={entry.icon} className="h-24 w-24 text-white/90" />
-        </div>
-        {/* Right: summary + CTA */}
-        <div>
-          {entry.badge && <span className="rounded-full bg-primary-50 px-3 py-1 text-xs font-bold text-primary">{entry.badge}</span>}
-          <h1 className="mt-2 text-2xl font-extrabold text-navy md:text-3xl">{entry.title}</h1>
-          <div className="mt-2"><RatingStars rating={entry.rating ?? 5} reviews={entry.reviews} /></div>
-          {entry.summary && (
-            <div
-              className="prose prose-sm mt-3 max-w-none text-ink/70 prose-headings:text-navy prose-a:text-primary"
-              dangerouslySetInnerHTML={{ __html: cleanHtml(entry.summary) }}
-            />
-          )}
-          <div className="mt-4 rounded-xl2 border border-ink/10 bg-white p-4">
-            <PriceTag entry={entry} />
-            <p className="mt-1 text-xs text-ink/50">Giá trên website mang tính tham khảo. Vui lòng liên hệ để nhận báo giá chính xác — giá tùy cấu hình / số lượng.</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <QuoteButton interest={entry.title} className="rounded-lg az-grad px-4 py-2.5 text-center text-sm font-bold text-white hover:opacity-95">NHẬN BÁO GIÁ</QuoteButton>
-              <QuoteButton interest={entry.title} className="rounded-lg border border-primary/30 px-4 py-2.5 text-center text-sm font-bold text-primary hover:bg-primary-50">GỌI CHO TÔI</QuoteButton>
+    <section className="py-12 bg-mist border-t border-slate-200">
+      <div className="max-w-site mx-auto px-4">
+        <SectionHeading kicker="Tại sao nên chọn" title="Sử dụng giải pháp bản quyền chính hãng" />
+        <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-5">
+          {items.map((w, i) => (
+            <div key={i} className="reveal bg-white rounded-2xl border border-slate-200 p-5 flex flex-col gap-3">
+              <span className="w-12 h-12 rounded-xl bg-primary-50 text-primary grid place-items-center">
+                <Icon name={w.icon} className="w-6 h-6" stroke={1.6} />
+              </span>
+              <h3 className="font-extrabold text-navy text-[14.5px] leading-snug">{w.t}</h3>
+              <p className="text-[12.5px] text-slate-500 leading-relaxed">{w.d}</p>
             </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink/60">
-            <span className="flex items-center gap-1.5"><Icon name="check" className="h-4 w-4 text-emerald-500" /> Bản quyền chính hãng</span>
-            <span className="flex items-center gap-1.5"><Icon name="check" className="h-4 w-4 text-emerald-500" /> Hóa đơn VAT</span>
-            <span className="flex items-center gap-1.5"><Icon name="check" className="h-4 w-4 text-emerald-500" /> Triển khai toàn quốc</span>
-          </div>
+          ))}
         </div>
       </div>
-      {/* Structured blocks (features, process, specs, faq, cta) — the middle of the page */}
-      {(() => {
-        const structured = (entry.body ?? []).filter((b) => b.type !== "richText");
-        return structured.length ? (
-          <div className="mt-10 space-y-8">
-            {structured.map((b, i) => <BlockView key={i} block={b} />)}
-          </div>
-        ) : null;
-      })()}
+    </section>
+  );
+}
 
-      {/* Brand strip from the entry's brand relation (both seed + Strapi modes) */}
-      {entry.brandSlugs?.length ? (
-        <div className="mt-10">
-          <BlockView block={{ type: "brandStrip", title: "Hãng cung cấp", brandSlugs: entry.brandSlugs }} />
+export async function EntryDetail({
+  entry,
+  crumbs,
+}: {
+  entry: CatalogEntry;
+  crumbs: { label: string; href?: string }[];
+}) {
+  const card = toCard(entry);
+  const images = [entry.coverImage, ...(entry.gallery ?? [])].filter((u): u is string => !!u);
+  const siblings = await getEntriesByKind(entry.kind);
+  const related = siblings.filter((e) => e.slug !== entry.slug).slice(0, 4).map(toCard);
+  const brandName = card.brand;
+
+  return (
+    <>
+      {/* Breadcrumb bar */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-site mx-auto px-4 py-3">
+          <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, ...crumbs]} />
         </div>
-      ) : null}
+      </div>
 
-      {/* Long-form content section — ALWAYS LAST, just above the footer (softvn style) */}
-      {(() => {
-        const rich = (entry.body ?? []).filter((b) => b.type === "richText");
-        return rich.length ? (
-          <section className="mt-12 border-t border-ink/10 pt-10 space-y-8">
-            {rich.map((b, i) => <BlockView key={i} block={b} />)}
-          </section>
-        ) : null;
-      })()}
-    </div>
+      {/* Top 2-col */}
+      <section className="bg-mist py-10">
+        <div className="max-w-site mx-auto px-4">
+          <div className="grid lg:grid-cols-[420px_1fr] gap-9 items-start">
+            <div className="reveal">
+              <EntryGallery images={images} icon={entry.icon} title={entry.title} />
+            </div>
+            <div className="reveal space-y-5" style={{ transitionDelay: "80ms" }}>
+              {brandName && (
+                <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-card">
+                  <span className="font-extrabold text-lg text-navy">{brandName}</span>
+                </div>
+              )}
+              <h1 className="text-3xl lg:text-4xl font-extrabold text-navy leading-tight">{entry.title}</h1>
+              <div className="flex items-center gap-4 flex-wrap">
+                <RatingStars value={entry.rating ?? 5} reviews={entry.reviews} size="w-5 h-5" />
+              </div>
+              <PriceTag product={card} size="lg" />
+              <DetailActions productName={entry.title} />
+              <div className="flex flex-wrap gap-2">
+                {BADGES.map((b, i) => (
+                  <span key={i} className={`text-[12px] font-bold px-3 py-1.5 rounded-xl border ${BADGE_COLORS[i % BADGE_COLORS.length]}`}>
+                    {b}
+                  </span>
+                ))}
+              </div>
+              <p className="text-[12.5px] text-slate-500 italic leading-relaxed">
+                Giá trên website mang tính tham khảo. Vui lòng liên hệ để nhận báo giá chính xác nhất.
+              </p>
+              <CommitmentBox />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs */}
+      <section className="py-10 bg-mist">
+        <div className="max-w-site mx-auto px-4">
+          <DetailTabs blocks={entry.body ?? []} lead={entry.summary} />
+        </div>
+      </section>
+
+      <WhyLicensed hardware={entry.kind === "category"} />
+
+      {/* Inline quote */}
+      <section className="py-12 bg-white border-t border-slate-200">
+        <div className="max-w-site mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <SectionHeading kicker="Liên hệ" title="Nhận báo giá / Đăng ký tư vấn" center />
+            <div className="mt-7">
+              <InlineQuoteForm product={entry.title} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Related */}
+      {related.length > 0 && (
+        <section className="py-12 bg-mist border-t border-slate-200">
+          <div className="max-w-site mx-auto px-4">
+            <SectionHeading kicker="Gợi ý" title="Sản phẩm & giải pháp liên quan" />
+            <div className="mt-7 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+              {related.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <CTAStrip />
+    </>
   );
 }

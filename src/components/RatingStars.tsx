@@ -1,14 +1,32 @@
 import { Icon } from "./Icon";
 
-export function RatingStars({ rating = 5, reviews }: { rating?: number; reviews?: number }) {
+export function RatingStars({
+  value = 5,
+  reviews,
+  size = "w-4 h-4",
+  showCount = true,
+}: {
+  value?: number;
+  reviews?: number;
+  size?: string;
+  showCount?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-1 text-xs text-ink/60">
-      <span className="flex text-amber-400">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Icon key={i} name="star" className={`h-3.5 w-3.5 ${i < rating ? "fill-amber-400" : "fill-none text-ink/20"}`} />
+    <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-0.5 text-amber-400">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Icon
+            key={i}
+            name="star"
+            filled={i <= Math.round(value)}
+            stroke={1.4}
+            className={`${size} ${i <= Math.round(value) ? "text-amber-400" : "text-slate-300"}`}
+          />
         ))}
-      </span>
-      {reviews != null && <span>({reviews})</span>}
+      </div>
+      {showCount && reviews != null && (
+        <span className="text-xs text-slate-500 font-medium">({reviews})</span>
+      )}
     </div>
   );
 }

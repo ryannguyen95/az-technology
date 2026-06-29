@@ -1,4 +1,4 @@
-import type { Brand, CatalogEntry, EntryKind } from "@/lib/types";
+import type { Brand, CatalogEntry, EntryKind, HeroBanner } from "@/lib/types";
 import { PREFIX_KINDS } from "@/lib/routing";
 import {
   brands, entries as seedEntries, settings, nav, heroSlides, categoryTiles, whyAZ, footerLinks,
@@ -26,6 +26,10 @@ export async function getEntriesByKind(kind: EntryKind): Promise<CatalogEntry[]>
 
 export async function getFeatured(): Promise<CatalogEntry[]> {
   return (await getAllEntries()).filter((e) => e.featured);
+}
+
+export async function getBanners(): Promise<HeroBanner[]> {
+  return USE_STRAPI ? strapi.getBanners() : [];
 }
 
 export async function getChildren(parentSlug: string): Promise<CatalogEntry[]> {

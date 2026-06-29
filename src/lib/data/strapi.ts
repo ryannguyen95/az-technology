@@ -1,4 +1,4 @@
-import type { Block, Brand, CatalogEntry, EntryKind } from "@/lib/types";
+import type { Block, Brand, CatalogEntry, EntryKind, HeroBanner } from "@/lib/types";
 
 /* Strapi v5 adapter. Maps the flat v5 response shape (no data.attributes nesting,
    documentId-based) to the internal CatalogEntry the components already consume.
@@ -37,7 +37,8 @@ function mapBlock(b: RawBlock): Block | null {
 type RawEntry = Record<string, any>;
 function mapEntry(e: RawEntry): CatalogEntry {
   return {
-    kind: e.kind,
+    // `kind` is now an entry-kind relation; the machine value lives on `.key`.
+    kind: e.kind?.key,
     slug: e.slug,
     title: e.title,
     parentSlug: e.parent?.slug,
@@ -67,6 +68,7 @@ function absolute(url: string) {
 
 const POPULATE =
   "populate[brands][fields][0]=slug&populate[parent][fields][0]=slug" +
+  "&populate[kind][fields][0]=key" +
   "&populate[coverImage][fields][0]=url&populate[gallery][fields][0]=url" +
   "&populate[seo]=true&populate[body][populate]=*";
 
@@ -76,8 +78,22 @@ export async function getAllEntries(): Promise<CatalogEntry[]> {
 }
 
 export async function getEntriesByKind(kind: EntryKind): Promise<CatalogEntry[]> {
-  const json = await sFetch(`/catalog-entries?filters[kind][$eq]=${kind}&pagination[pageSize]=200&${POPULATE}`, ["catalog-entries"]);
+  const json = await sFetch(`/catalog-entries?filters[kind][key][$eq]=${kind}&pagination[pageSize]=200&${POPULATE}`, ["catalog-entries"]);
   return (json.data ?? []).map(mapEntry);
+}
+
+export async function getBanners(): Promise<HeroBanner[]> {
+  const json = await sFetch(
+    `/banners?filters[active][$eq]=true&sort=order:asc&pagination[pageSize]=20&populate[image][fields][0]=url`,
+    ["banners"],
+  );
+  return (json.data ?? []).map((b: any) => ({
+    id: b.documentId ?? String(b.id),
+    title: b.title,
+    image: b.image?.url ? absolute(b.image.url) : null,
+    ctaLabel: b.ctaLabel ?? undefined,
+    ctaHref: b.ctaHref ?? undefined,
+  }));
 }
 
 export async function getBrandsRaw(): Promise<Brand[]> {

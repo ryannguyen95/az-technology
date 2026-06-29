@@ -35,6 +35,16 @@ export interface SeedEntry {
   featured?: boolean; priceMode?: string; brandSlugs?: string[]; body?: any[];
 }
 
+// Editable kind list (entry-kind collection). `key` is the machine value the
+// frontend routing/render logic reads; `label` is the admin/display name.
+export const KINDS = [
+  { key: "category", label: "Danh mục", order: 1 },
+  { key: "solution", label: "Giải pháp", order: 2 },
+  { key: "service", label: "Dịch vụ", order: 3 },
+  { key: "software", label: "Phần mềm", order: 4 },
+  { key: "product", label: "Sản phẩm", order: 5 },
+];
+
 const TONES = ["blue", "cyan", "green", "navy", "red"];
 const tone = (i: number) => TONES[i % TONES.length];
 
@@ -181,11 +191,21 @@ export const ENTRIES: SeedEntry[] = RAW_ENTRIES.map((e) => ({
   body: [{ __component: "blocks.rich-text", heading: `Thông tin chi tiết về ${e.title}`, html: contentHTML(e.kind, e.title) }],
 }));
 
+// Hero banners are now image-only: upload one image per banner + a CTA link.
+// `image` is attached in the admin; these seeds just provide the CTA targets.
 export const HERO = {
-  title: "Hạ tầng số", highlight: "vững chắc", eyebrow: "Giải pháp CNTT toàn diện",
-  subtitle: "Phần mềm bản quyền · Phần cứng chính hãng · Hạ tầng Data Center · Dịch vụ IT & Cloud — tất cả trong một đối tác duy nhất.",
-  ctaLabel: "Xem giải pháp Data Center", ctaHref: "/giai-phap/ha-tang-data-center", gradientTone: "blue", order: 1, active: true,
+  title: "Hạ tầng số vững chắc",
+  ctaLabel: "Xem giải pháp Data Center",
+  ctaHref: "/giai-phap/ha-tang-data-center",
+  order: 1,
+  active: true,
 };
+
+export const HEROES = [
+  HERO,
+  { title: "Bản quyền phần mềm", ctaLabel: "Xem danh mục phần mềm", ctaHref: "/danh-muc/phan-mem", order: 2, active: true },
+  { title: "Vận hành IT", ctaLabel: "Khám phá dịch vụ IT", ctaHref: "/dich-vu/dich-vu-it-co-ban", order: 3, active: true },
+];
 
 export const SETTINGS = {
   company: "AZ IT Solutions & Services", shortName: "AZ Technology", slogan: "Software · Hardware · Cloud Services",
