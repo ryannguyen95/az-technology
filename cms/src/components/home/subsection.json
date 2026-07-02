@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_home_subsections",
+  "info": { "displayName": "Mục con (Sub-section)", "icon": "bulletList" },
+  "options": {},
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product"
+    },
+    "parentCategory": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::parent-category.parent-category"
+    }
+  }
+}

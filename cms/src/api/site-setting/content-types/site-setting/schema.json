@@ -1,7 +1,7 @@
 {
   "kind": "singleType",
   "collectionName": "site_setting",
-  "info": { "singularName": "site-setting", "pluralName": "site-settings", "displayName": "Site Settings" },
+  "info": { "singularName": "site-setting", "pluralName": "site-settings", "displayName": "Cấu hình website" },
   "options": { "draftAndPublish": false },
   "attributes": {
     "company": { "type": "string" },

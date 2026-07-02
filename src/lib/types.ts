@@ -2,7 +2,6 @@
 // One CatalogEntry type with a `kind` discriminator + a composable block body.
 
 export type EntryKind = "category" | "solution" | "service" | "software" | "product";
-export type PriceMode = "show" | "contact";
 export type Tone = "blue" | "cyan" | "green" | "red" | "navy";
 
 // Dynamic-zone blocks — each entry composes only what it needs.
@@ -16,25 +15,21 @@ export interface CatalogEntry {
   kind: EntryKind;
   slug: string;
   title: string;
+  headline?: string; // long display title for the detail page H1 (falls back to title)
   parentSlug?: string; // hierarchy: group -> sub-entry
   order?: number;
   icon?: string;
   tone?: Tone;
   badge?: string;
   summary?: string;
+  highlights?: string[]; // ✓ feature bullets shown as a checklist under the title
   coverImage?: string | null;
   gallery?: string[];
   brandSlugs?: string[];
-  featured?: boolean;
-  // pricing
-  priceMode: PriceMode; // "show" -> render price block; "contact" -> "Liên hệ báo giá"
-  priceOld?: number | null;
-  priceNew?: number | null;
-  priceFromLabel?: string;
-  rating?: number;
-  reviews?: number;
-  // detail body
-  body?: Block[];
+  // detail content — two tabs: description (HTML) + specs/system requirements (HTML)
+  description?: string;
+  specs?: string;
+  body?: Block[]; // legacy/unused — kept for backward compatibility
   // seo
   seo?: { metaTitle?: string; metaDescription?: string };
 }
@@ -71,6 +66,20 @@ export interface CategoryTile {
   label: string;
   icon: string;
   href: string;
+}
+
+// Configurable homepage sections (CMS-driven). Each section / sub-section is one
+// ordered product list; the homepage shows the first 5 and reveals the rest inline.
+export interface HomeSubsection {
+  title: string;
+  products: CatalogEntry[];
+  moreHref?: string; // "Xem thêm" links to a chosen parent-category page
+}
+export interface HomeSection {
+  title: string;
+  products: CatalogEntry[];
+  subsections: HomeSubsection[];
+  moreHref?: string; // "Xem thêm" links to a chosen parent-category page
 }
 
 export interface SiteSettings {

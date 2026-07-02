@@ -9,12 +9,6 @@ export interface CardProduct {
   name: string;
   cat: string;
   brand?: string;
-  priceOld?: number | null;
-  priceNew?: number | null;
-  from?: string;
-  contact?: boolean;
-  rating: number;
-  reviews?: number;
   badge?: string;
   tone: Tone;
   icon?: string;
@@ -48,12 +42,6 @@ export function toCard(e: CatalogEntry): CardProduct {
     name: e.title,
     cat: catLine(e),
     brand: brandName(e.brandSlugs?.[0]),
-    priceOld: e.priceOld ?? null,
-    priceNew: e.priceNew ?? null,
-    from: e.priceMode === "contact" ? undefined : e.priceFromLabel,
-    contact: e.priceMode === "contact" && e.priceNew == null,
-    rating: e.rating ?? 5,
-    reviews: e.reviews,
     badge: e.badge,
     tone: (e.tone as Tone) ?? "blue",
     icon: e.icon,

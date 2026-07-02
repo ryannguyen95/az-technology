@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": {
+    "singularName": "product",
+    "pluralName": "products",
+    "displayName": "Sản phẩm",
+    "description": "Sản phẩm / phần mềm / dịch vụ / giải pháp. Mỗi sản phẩm thuộc về một Danh mục."
+  },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "headline": { "type": "text" },
+    "slug": { "type": "uid", "targetField": "title" },
+    "category": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::category.category"
+    },
+    "order": { "type": "integer", "default": 0 },
+    "icon": { "type": "string" },
+    "tone": { "type": "enumeration", "enum": ["blue", "cyan", "green", "navy", "red"], "default": "blue" },
+    "badge": { "type": "string" },
+    "summary": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": { "preset": "defaultHtml" }
+    },
+    "highlights": {
+      "type": "component",
+      "repeatable": true,
+      "component": "blocks.highlight"
+    },
+    "description": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": { "preset": "defaultHtml" }
+    },
+    "specs": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": { "preset": "defaultHtml" }
+    },
+    "coverImage": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "gallery": { "type": "media", "multiple": true, "allowedTypes": ["images"] },
+    "brands": { "type": "relation", "relation": "manyToMany", "target": "api::brand.brand", "inversedBy": "products" },
+    "seo": { "type": "component", "repeatable": false, "component": "seo.meta" }
+  }
+}

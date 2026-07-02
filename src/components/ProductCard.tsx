@@ -2,14 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import type { CardProduct } from "@/lib/card";
+import { startRouteProgress } from "@/lib/progress";
 import { ProductImage } from "./ProductImage";
-import { RatingStars } from "./RatingStars";
 import { useQuote } from "./QuoteModal";
 
 export function ProductCard({ product }: { product: CardProduct }) {
   const router = useRouter();
   const { openQuote } = useQuote();
-  const go = () => router.push(product.href);
+  const go = () => {
+    startRouteProgress();
+    router.push(product.href);
+  };
   return (
     <div
       onClick={go}
@@ -34,12 +37,9 @@ export function ProductCard({ product }: { product: CardProduct }) {
       </div>
       <div className="p-4 flex flex-col flex-1">
         <div className="text-[11px] font-bold tracking-wide text-cyan-600 uppercase mb-1.5">{product.cat}</div>
-        <h3 className="font-bold text-navy text-[15px] leading-snug clamp-2 group-hover:text-primary transition-colors min-h-[42px]">
+        <h3 className="font-bold text-navy text-[15px] leading-snug clamp-2 group-hover:text-primary transition-colors min-h-[42px] mb-4">
           {product.name}
         </h3>
-        <div className="mt-2 mb-4">
-          <RatingStars value={product.rating} reviews={product.reviews} />
-        </div>
         <div className="mt-auto flex gap-2">
           <button
             onClick={(e) => {

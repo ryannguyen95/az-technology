@@ -1,11 +1,8 @@
-import type { CatalogEntry } from "@/lib/types";
+import type { CatalogEntry, SiteSettings } from "@/lib/types";
 import { toCard } from "@/lib/card";
-import { getEntriesByKind } from "@/lib/data";
-import { settings } from "@/lib/data";
+import { getEntriesByKind, getSettings } from "@/lib/data";
 import { Icon } from "./Icon";
 import { Breadcrumb } from "./Breadcrumb";
-import { RatingStars } from "./RatingStars";
-import { PriceTag } from "./PriceTag";
 import { SectionHeading } from "./SectionHeading";
 import { EntryGallery } from "./EntryGallery";
 import { DetailActions } from "./DetailActions";
@@ -14,19 +11,20 @@ import { InlineQuoteForm } from "./InlineQuoteForm";
 import { CTAStrip } from "./CTAStrip";
 import { ProductCard } from "./ProductCard";
 
-const tel = settings.hotline.replace(/\s/g, "");
-const BADGES = ["Bản quyền chính hãng", "Hóa đơn VAT", "Hỗ trợ 24/7 toàn quốc"];
+// Same 3 marketing badges for every product (design decision — not from the CMS).
+const BADGES = ["Miễn phí tư vấn", "Miễn phí triển khai cho số lượng lớn", "Vô vàn ưu đãi"];
 const BADGE_COLORS = [
   "bg-cyan-50 text-cyan-700 border-cyan-200",
   "bg-amber-50 text-amber-700 border-amber-200",
   "bg-emerald-50 text-emerald-700 border-emerald-200",
 ];
 
-function CommitmentBox() {
+function CommitmentBox({ settings }: { settings: SiteSettings }) {
+  const tel = settings.hotline.replace(/\s/g, "");
   const items = [
-    "Sản phẩm / dịch vụ bản quyền chính hãng 100%",
+    "Sản phẩm chính hãng 100%",
     "Xuất hóa đơn VAT đầy đủ",
-    "Hỗ trợ kỹ thuật lâu dài sau triển khai",
+    "Hỗ trợ kỹ thuật trong suốt quá trình sử dụng",
     "Tư vấn miễn phí, báo giá nhanh trong ngày",
   ];
   return (
@@ -99,6 +97,7 @@ export async function EntryDetail({
   crumbs: { label: string; href?: string }[];
 }) {
   const card = toCard(entry);
+  const settings = await getSettings();
   const images = [entry.coverImage, ...(entry.gallery ?? [])].filter((u): u is string => !!u);
   const siblings = await getEntriesByKind(entry.kind);
   const related = siblings.filter((e) => e.slug !== entry.slug).slice(0, 4).map(toCard);
@@ -118,7 +117,7 @@ export async function EntryDetail({
         <div className="max-w-site mx-auto px-4">
           <div className="grid lg:grid-cols-[420px_1fr] gap-9 items-start">
             <div className="reveal">
-              <EntryGallery images={images} icon={entry.icon} title={entry.title} />
+              <EntryGallery images={images} icon={entry.icon} title={entry.title} badge={entry.badge} />
             </div>
             <div className="reveal space-y-5" style={{ transitionDelay: "80ms" }}>
               {brandName && (
@@ -126,11 +125,19 @@ export async function EntryDetail({
                   <span className="font-extrabold text-lg text-navy">{brandName}</span>
                 </div>
               )}
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-navy leading-tight">{entry.title}</h1>
-              <div className="flex items-center gap-4 flex-wrap">
-                <RatingStars value={entry.rating ?? 5} reviews={entry.reviews} size="w-5 h-5" />
-              </div>
-              <PriceTag product={card} size="lg" />
+              <h1 className="text-3xl lg:text-4xl font-extrabold text-navy leading-tight">{entry.headline || entry.title}</h1>
+              {entry.highlights && entry.highlights.length > 0 && (
+                <ul className="space-y-2.5 text-[14px] text-slate-700">
+                  {entry.highlights.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-primary-50 text-primary grid place-items-center shrink-0 mt-0.5">
+                        <Icon name="check" className="w-3 h-3" stroke={2.2} />
+                      </span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <DetailActions productName={entry.title} />
               <div className="flex flex-wrap gap-2">
                 {BADGES.map((b, i) => (
@@ -139,19 +146,20 @@ export async function EntryDetail({
                   </span>
                 ))}
               </div>
-              <p className="text-[12.5px] text-slate-500 italic leading-relaxed">
-                Giá trên website mang tính tham khảo. Vui lòng liên hệ để nhận báo giá chính xác nhất.
-              </p>
-              <CommitmentBox />
             </div>
+          </div>
+
+          {/* Commitment — full-width below the 2-col block */}
+          <div className="reveal mt-7">
+            <CommitmentBox settings={settings} />
           </div>
         </div>
       </section>
 
-      {/* Tabs */}
+      {/* Tabs (description + specs), full-width */}
       <section className="py-10 bg-mist">
         <div className="max-w-site mx-auto px-4">
-          <DetailTabs blocks={entry.body ?? []} lead={entry.summary} />
+          <DetailTabs description={entry.description} specs={entry.specs} />
         </div>
       </section>
 

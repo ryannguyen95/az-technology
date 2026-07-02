@@ -1,0 +1,8 @@
+{
+  "collectionName": "components_blocks_highlights",
+  "info": { "displayName": "Điểm nổi bật", "icon": "check" },
+  "options": {},
+  "attributes": {
+    "text": { "type": "string", "required": true }
+  }
+}

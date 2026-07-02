@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
-import { settings } from "@/lib/data";
+import { useSettings } from "./SettingsProvider";
 
 export type QuoteMode = "full" | "quick" | "callback";
 export type QuoteOpts = { mode?: QuoteMode; product?: string };
@@ -82,6 +82,7 @@ function validate(fields: FieldKey[], form: Record<string, string>) {
 }
 
 export function QuoteProvider({ children }: { children: React.ReactNode }) {
+  const settings = useSettings();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<QuoteMode>("full");
   const [done, setDone] = useState(false);

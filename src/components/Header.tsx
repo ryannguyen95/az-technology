@@ -2,27 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { NAV, type MegaItem } from "@/lib/nav";
-import { settings } from "@/lib/data";
+import type { MegaItem } from "@/lib/nav";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
 import { AZLogo } from "./Cards";
+import { SearchBox } from "./SearchBox";
 import { useQuote } from "./QuoteModal";
-
-const tel = settings.hotline.replace(/\s/g, "");
-
-function SearchBar({ className = "" }: { className?: string }) {
-  return (
-    <form onSubmit={(e) => e.preventDefault()} className={`relative ${className}`}>
-      <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-      <input
-        type="search"
-        placeholder="Tìm sản phẩm, giải pháp, dịch vụ..."
-        className="w-full rounded-full bg-white border border-slate-200 pl-9 pr-4 py-2 text-sm text-navy placeholder:text-slate-400 outline-none focus:border-primary transition-colors"
-      />
-    </form>
-  );
-}
+import { useSettings } from "./SettingsProvider";
 
 function MegaPanel({ item, onClose }: { item: MegaItem; onClose: () => void }) {
   if (!item.columns) return null;
@@ -44,14 +30,18 @@ function MegaPanel({ item, onClose }: { item: MegaItem; onClose: () => void }) {
               <div key={i}>
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  <h4 className="text-[12.5px] font-extrabold tracking-wide uppercase text-navy">{col.heading}</h4>
+                  {col.href ? (
+                    <Link href={col.href} onClick={onClose} className="text-[12.5px] font-extrabold tracking-wide uppercase text-navy hover:text-primary transition-colors">{col.heading}</Link>
+                  ) : (
+                    <h4 className="text-[12.5px] font-extrabold tracking-wide uppercase text-navy">{col.heading}</h4>
+                  )}
                 </div>
                 <ul className="space-y-1.5">
                   {col.items.map((it, j) => (
                     <li key={j}>
-                      <Link href={item.href} className="group flex items-center gap-1.5 text-[13.5px] text-slate-600 hover:text-primary transition-colors">
+                      <Link href={it.href} onClick={onClose} className="group flex items-center gap-1.5 text-[13.5px] text-slate-600 hover:text-primary transition-colors">
                         <span className="w-1 h-1 rounded-full bg-slate-300 group-hover:bg-primary transition-colors" />
-                        <span className="leading-snug">{it}</span>
+                        <span className="leading-snug">{it.label}</span>
                       </Link>
                     </li>
                   ))}
@@ -81,7 +71,7 @@ function MegaPanel({ item, onClose }: { item: MegaItem; onClose: () => void }) {
   );
 }
 
-function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void; nav: MegaItem[] }) {
   const [exp, setExp] = useState<string | null>(null);
   const { openQuote } = useQuote();
   useEffect(() => {
@@ -101,10 +91,10 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
           </button>
         </div>
         <div className="p-4">
-          <SearchBar />
+          <SearchBox onNavigate={onClose} />
         </div>
         <nav className="flex-1 overflow-y-auto az-scroll px-2 pb-4">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <div key={item.key} className="border-b border-slate-100">
               {item.columns ? (
                 <>
@@ -121,7 +111,7 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
                             <ul className="space-y-1 pl-1">
                               {col.items.map((it, j) => (
                                 <li key={j}>
-                                  <Link href={item.href} onClick={onClose} className="block text-[13.5px] text-slate-600 py-1">{it}</Link>
+                                  <Link href={it.href} onClick={onClose} className="block text-[13.5px] text-slate-600 py-1">{it.label}</Link>
                                 </li>
                               ))}
                             </ul>
@@ -147,11 +137,13 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-export function Header() {
+export function Header({ nav }: { nav: MegaItem[] }) {
   const [active, setActive] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { openQuote } = useQuote();
+  const settings = useSettings();
+  const tel = settings.hotline.replace(/\s/g, "");
 
   const enter = (key: string) => {
     if (timer.current) clearTimeout(timer.current);
@@ -160,7 +152,7 @@ export function Header() {
   const leave = () => {
     timer.current = setTimeout(() => setActive(null), 120);
   };
-  const current = NAV.find((n) => n.key === active && n.columns);
+  const current = nav.find((n) => n.key === active && n.columns);
 
   return (
     <header className="sticky top-0 z-[100]">
@@ -195,7 +187,7 @@ export function Header() {
               <Icon name="menu" className="w-6 h-6" />
             </button>
             <AZLogo />
-            <SearchBar className="hidden xl:block flex-1 max-w-md" />
+            <SearchBox className="hidden xl:block flex-1 max-w-md" />
             <div className="flex-1 hidden xl:block" />
             <Button variant="primary" size="sm" className="ml-auto lg:ml-0" icon="send" onClick={() => openQuote({ mode: "full" })}>
               <span className="hidden sm:inline">NHẬN BÁO GIÁ</span>
@@ -207,7 +199,7 @@ export function Header() {
         <div className="hidden lg:block border-t border-slate-100 relative">
           <div className="max-w-site mx-auto px-4">
             <nav className="flex items-center gap-0.5">
-              {NAV.map((item) => {
+              {nav.map((item) => {
                 const isActive = active === item.key;
                 return (
                   <div key={item.key} onMouseEnter={() => enter(item.key)} className="relative">
@@ -234,7 +226,7 @@ export function Header() {
         </div>
       </div>
 
-      <MobileNav open={mobile} onClose={() => setMobile(false)} />
+      <MobileNav open={mobile} onClose={() => setMobile(false)} nav={nav} />
     </header>
   );
 }

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Manrope } from "next/font/google";
 import "./globals.css";
-import { settings } from "@/lib/data";
+import { getMegaNav, getSettings } from "@/lib/data";
+import { RouteProgress } from "@/components/RouteProgress";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { FloatingButtons } from "@/components/FloatingButtons";
 import { QuoteProvider } from "@/components/QuoteModal";
+import { SettingsProvider } from "@/components/SettingsProvider";
 import { Reveal } from "@/components/Reveal";
 
 const manrope = Manrope({ subsets: ["latin", "vietnamese"], variable: "--font-manrope" });
@@ -30,27 +33,33 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [nav, site] = await Promise.all([getMegaNav(), getSettings()]);
   const org = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: settings.company,
+    name: site.company,
     url: SITE,
-    telephone: settings.hotline,
-    email: settings.email,
-    address: { "@type": "PostalAddress", streetAddress: settings.address, addressCountry: "VN" },
+    telephone: site.hotline,
+    email: site.email,
+    address: { "@type": "PostalAddress", streetAddress: site.address, addressCountry: "VN" },
   };
   return (
-    <html lang="vi" className={manrope.variable}>
+    <html lang="vi" className={manrope.variable} suppressHydrationWarning>
       <body className="font-sans">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }} />
-        <QuoteProvider>
-          <Reveal />
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <FloatingButtons />
-        </QuoteProvider>
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
+        <SettingsProvider value={site}>
+          <QuoteProvider>
+            <Reveal />
+            <Header nav={nav} />
+            <main>{children}</main>
+            <Footer />
+            <FloatingButtons />
+          </QuoteProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

@@ -1,13 +1,13 @@
 "use client";
 
-import { settings } from "@/lib/data";
 import { Button } from "./Button";
 import { useQuote } from "./QuoteModal";
-
-const tel = settings.hotline.replace(/\s/g, "");
+import { useSettings } from "./SettingsProvider";
 
 export function CTAStrip() {
   const { openQuote } = useQuote();
+  const settings = useSettings();
+  const tel = settings.hotline.replace(/\s/g, "");
   return (
     <section className="relative overflow-hidden az-grad-navy text-white">
       <div className="absolute inset-0 az-mesh" />

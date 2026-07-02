@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { settings } from "@/lib/data";
+import { getSettings } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Chính sách bảo mật", description: "Chính sách bảo mật thông tin của AZ Technology." };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const settings = await getSettings();
   return (
     <div className="az-container max-w-3xl py-10">
       <h1 className="text-3xl font-extrabold text-navy">Chính sách bảo mật</h1>

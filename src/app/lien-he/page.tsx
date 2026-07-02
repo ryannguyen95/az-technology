@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { settings } from "@/lib/data";
+import { getSettings } from "@/lib/data";
 import { Icon } from "@/components/Icon";
 import { QuoteButton } from "@/components/QuoteButton";
 
 export const metadata: Metadata = { title: "Liên hệ", description: "Liên hệ AZ Technology để nhận tư vấn giải pháp CNTT cho doanh nghiệp." };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getSettings();
   const rows = [
     { icon: "phone", label: "Hotline", value: settings.hotline, href: `tel:${settings.hotline.replace(/\s/g, "")}` },
     { icon: "mail", label: "Email", value: settings.email, href: `mailto:${settings.email}` },

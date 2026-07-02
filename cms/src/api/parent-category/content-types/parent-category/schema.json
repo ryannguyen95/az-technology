@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "parent_categories",
+  "info": {
+    "singularName": "parent-category",
+    "pluralName": "parent-categories",
+    "displayName": "Danh mục cha",
+    "description": "Danh mục cấp 1 — nhóm lớn nhất: Phần mềm, Phần cứng, Dịch vụ IT, Giải pháp. Mỗi Danh mục con thuộc về một Danh mục cha."
+  },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "slug": { "type": "uid", "targetField": "title" },
+    "icon": { "type": "string" },
+    "order": { "type": "integer", "default": 0 },
+    "summary": { "type": "text" }
+  }
+}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntryDetail } from "@/components/EntryDetail";
-import { getEntriesByKind, getEntryForPrefix } from "@/lib/data";
+import { getBreadcrumb, getEntriesByKind, getEntryForPrefix } from "@/lib/data";
 import { stripHtml } from "@/lib/strip";
 
 export const revalidate = 3600;
@@ -22,5 +22,5 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const { slug } = await params;
   const entry = await getEntryForPrefix("giai-phap", slug);
   if (!entry) notFound();
-  return <EntryDetail entry={entry} crumbs={[{ label: "Giải pháp", href: "/giai-phap/ha-tang-data-center" }, { label: entry.title }]} />;
+  return <EntryDetail entry={entry} crumbs={await getBreadcrumb(entry)} />;
 }

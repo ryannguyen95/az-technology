@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "home_sections",
+  "info": {
+    "singularName": "home-section",
+    "pluralName": "home-sections",
+    "displayName": "Mục trang chủ",
+    "description": "Các khối sản phẩm trên trang chủ. Chọn sản phẩm trực tiếp, hoặc chia thành nhiều mục con. Trang chủ hiển thị 5 sản phẩm đầu; bấm 'Xem tất cả' để xem hết."
+  },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "order": { "type": "integer", "default": 0 },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product"
+    },
+    "parentCategory": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::parent-category.parent-category"
+    },
+    "subsections": {
+      "type": "component",
+      "repeatable": true,
+      "component": "home.subsection"
+    }
+  }
+}

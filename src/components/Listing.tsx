@@ -12,9 +12,8 @@ import { useQuote } from "./QuoteModal";
 
 const SORT_OPTS = [
   { v: "hot", l: "Phổ biến nhất" },
-  { v: "price-asc", l: "Giá thấp → cao" },
-  { v: "price-desc", l: "Giá cao → thấp" },
-  { v: "rating", l: "Đánh giá cao" },
+  { v: "name-asc", l: "Tên A → Z" },
+  { v: "name-desc", l: "Tên Z → A" },
 ];
 
 export function Listing({
@@ -22,12 +21,17 @@ export function Listing({
   entries,
   brands,
   crumbs,
+  searchable = true,
+  query,
 }: {
   title: string;
   entries: CatalogEntry[];
   brands: Brand[];
   crumbs: { label: string; href?: string }[];
+  searchable?: boolean; // show the in-page "filter" search box (off on the search page)
+  query?: string; // present → search-results mode: single-line header, tailored empty state
 }) {
+  const isSearch = query !== undefined;
   const { openQuote } = useQuote();
   const [brand, setBrand] = useState<string[]>([]);
   const [sort, setSort] = useState("hot");
@@ -49,14 +53,13 @@ export function Listing({
     }
     const arr = [...list];
     switch (sort) {
-      case "price-asc":
-        return arr.sort((a, b) => (a.priceNew || 9e9) - (b.priceNew || 9e9));
-      case "price-desc":
-        return arr.sort((a, b) => (b.priceNew || 0) - (a.priceNew || 0));
-      case "rating":
-        return arr.sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.reviews || 0) - (a.reviews || 0));
+      case "name-asc":
+        return arr.sort((a, b) => a.title.localeCompare(b.title, "vi"));
+      case "name-desc":
+        return arr.sort((a, b) => b.title.localeCompare(a.title, "vi"));
       default:
-        return arr;
+        // "hot": by manual order
+        return arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     }
   }, [entries, brand, sort, search]);
 
@@ -75,21 +78,32 @@ export function Listing({
       <div className="bg-white py-8 border-b border-slate-200">
         <div className="max-w-site mx-auto px-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="text-xs font-extrabold tracking-[.18em] uppercase text-cyan-600 mb-1.5">{filtered.length} kết quả</div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-navy">{title}</h1>
-            </div>
-            <div className="w-full sm:w-72">
-              <div className="relative">
-                <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Tìm trong danh mục..."
-                  className="w-full rounded-xl border border-slate-200 pl-9 pr-4 py-2.5 text-sm text-navy outline-none focus:border-primary bg-slate-50"
-                />
+            {isSearch ? (
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-navy">
+                <span className="text-cyan-600">{filtered.length}</span> kết quả
+                {query ? (
+                  <> cho <span className="text-primary">“{query}”</span></>
+                ) : null}
+              </h1>
+            ) : (
+              <div>
+                <div className="text-xs font-extrabold tracking-[.18em] uppercase text-cyan-600 mb-1.5">{filtered.length} kết quả</div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-navy">{title}</h1>
               </div>
-            </div>
+            )}
+            {searchable && (
+              <div className="w-full sm:w-72">
+                <div className="relative">
+                  <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm trong danh mục..."
+                    className="w-full rounded-xl border border-slate-200 pl-9 pr-4 py-2.5 text-sm text-navy outline-none focus:border-primary bg-slate-50"
+                  />
+                </div>
+              </div>
+            )}
           </div>
           {brand.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
@@ -148,7 +162,11 @@ export function Listing({
               <div className="text-center py-20 text-slate-400">
                 <Icon name="search" className="w-12 h-12 mx-auto mb-4 opacity-40" />
                 <p className="font-bold text-navy">Không tìm thấy kết quả phù hợp</p>
-                <p className="text-sm mt-1">Hãy thử bỏ bớt bộ lọc hoặc liên hệ AZ để được tư vấn.</p>
+                <p className="text-sm mt-1">
+                  {isSearch
+                    ? "Thử từ khoá khác hoặc liên hệ AZ để được tư vấn."
+                    : "Hãy thử bỏ bớt bộ lọc hoặc liên hệ AZ để được tư vấn."}
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">

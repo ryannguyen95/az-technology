@@ -1,85 +1,122 @@
-import type { Block, Brand, CatalogEntry, EntryKind, HeroBanner } from "@/lib/types";
+import type { Brand, CatalogEntry, EntryKind, HeroBanner, SiteSettings } from "@/lib/types";
 
-/* Strapi v5 adapter. Maps the flat v5 response shape (no data.attributes nesting,
-   documentId-based) to the internal CatalogEntry the components already consume.
-   Active when DATA_SOURCE=strapi. Components never see Strapi shapes. */
+/* Strapi v5 adapter. Reads three content shapes — Danh mục cha (parent-category),
+   Danh mục con (category) and Sản phẩm (product) — and maps them into the internal
+   CatalogEntry shape the components already consume. The `kind` (category/software/
+   product/service/solution) is DERIVED from the category tree, so the editor never
+   sets it. Active when DATA_SOURCE=strapi. */
 
 const URL = process.env.STRAPI_URL ?? "http://localhost:1337";
+const PUBLIC_URL = process.env.STRAPI_PUBLIC_URL ?? URL;
 const TOKEN = process.env.STRAPI_API_TOKEN;
+
+// Cache CMS reads for an hour in production (with tags for on-demand purging),
+// but never cache in dev so content edits show up on the next request without
+// clearing .next/cache.
+const CACHE_TTL = process.env.NODE_ENV === "production" ? 3600 : 0;
 
 async function sFetch(path: string, tags: string[] = []) {
   const res = await fetch(`${URL}/api${path}`, {
     headers: TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {},
-    next: { revalidate: 3600, tags: ["strapi", ...tags] },
+    next: { revalidate: CACHE_TTL, tags: ["strapi", ...tags] },
   });
   if (!res.ok) throw new Error(`Strapi ${path} -> ${res.status}`);
   return res.json();
 }
 
-// ── mappers (Strapi DTO -> internal view model) ──
-type RawBlock = Record<string, unknown> & { __component: string };
-
-function mapBlock(b: RawBlock): Block | null {
-  switch (b.__component) {
-    case "blocks.rich-text":
-      return { type: "richText", heading: b.heading as string | undefined, html: String(b.html ?? "") };
-    case "blocks.spec-accordion":
-      return { type: "specAccordion", title: b.title as string | undefined,
-        rows: ((b.rows as { label: string; value: string }[]) ?? []) };
-    case "blocks.faq":
-      return { type: "faq", title: b.title as string | undefined,
-        items: ((b.items as { q: string; a: string }[]) ?? []) };
-    default:
-      return null;
-  }
-}
-
-type RawEntry = Record<string, any>;
-function mapEntry(e: RawEntry): CatalogEntry {
-  return {
-    // `kind` is now an entry-kind relation; the machine value lives on `.key`.
-    kind: e.kind?.key,
-    slug: e.slug,
-    title: e.title,
-    parentSlug: e.parent?.slug,
-    order: e.order ?? undefined,
-    icon: e.icon ?? undefined,
-    tone: e.tone ?? undefined,
-    badge: e.badge ?? undefined,
-    summary: e.summary ?? undefined,
-    coverImage: e.coverImage?.url ? absolute(e.coverImage.url) : null,
-    gallery: (e.gallery ?? []).map((m: any) => absolute(m.url)),
-    brandSlugs: (e.brands ?? []).map((b: any) => b.slug),
-    featured: !!e.featured,
-    priceMode: e.priceMode ?? "contact",
-    priceOld: e.priceOld ?? null,
-    priceNew: e.priceNew ?? null,
-    priceFromLabel: e.priceFromLabel ?? undefined,
-    rating: e.rating ?? undefined,
-    reviews: e.reviews ?? undefined,
-    body: (e.body ?? []).map(mapBlock).filter(Boolean) as Block[],
-    seo: e.seo ? { metaTitle: e.seo.metaTitle, metaDescription: e.seo.metaDescription } : undefined,
-  };
-}
-
 function absolute(url: string) {
-  return url.startsWith("http") ? url : `${URL}${url}`;
+  return url.startsWith("http") ? url : `${PUBLIC_URL}${url}`;
 }
 
-const POPULATE =
-  "populate[brands][fields][0]=slug&populate[parent][fields][0]=slug" +
-  "&populate[kind][fields][0]=key" +
+// Top-level category slug → entry kind (drives URL prefix + card label).
+const TOP_KIND: Record<string, EntryKind> = {
+  "phan-mem": "software",
+  "phan-cung": "product",
+  "dich-vu-it": "service",
+  "giai-phap": "solution",
+};
+
+// Danh mục cha — the 4 top-level groups (no parent).
+async function fetchParentCategories(): Promise<CatalogEntry[]> {
+  const json = await sFetch(
+    `/parent-categories?pagination[pageSize]=50&sort=order:asc`,
+    ["parent-categories"],
+  );
+  return (json.data ?? []).map((c: any) => ({
+    kind: "category" as EntryKind,
+    slug: c.slug,
+    title: c.title,
+    parentSlug: undefined,
+    order: c.order ?? undefined,
+    icon: c.icon ?? undefined,
+    summary: c.summary ?? undefined,
+  }));
+}
+
+// Danh mục con — each belongs to one parent category; may carry rich `description`.
+async function fetchCategories(): Promise<CatalogEntry[]> {
+  const json = await sFetch(
+    `/categories?pagination[pageSize]=200&sort=order:asc&populate[parent][fields][0]=slug`,
+    ["categories"],
+  );
+  return (json.data ?? []).map((c: any) => ({
+    kind: "category" as EntryKind,
+    slug: c.slug,
+    title: c.title,
+    parentSlug: c.parent?.slug ?? undefined,
+    order: c.order ?? undefined,
+    icon: c.icon ?? undefined,
+    summary: c.summary ?? undefined,
+    description: c.description ?? undefined,
+  }));
+}
+
+const PRODUCT_POPULATE =
+  "populate[category][fields][0]=slug" +
   "&populate[coverImage][fields][0]=url&populate[gallery][fields][0]=url" +
-  "&populate[seo]=true&populate[body][populate]=*";
+  "&populate[brands][fields][0]=slug&populate[highlights]=true&populate[seo]=true";
+
+async function fetchProducts(catParent: Map<string, string | undefined>): Promise<CatalogEntry[]> {
+  const json = await sFetch(`/products?pagination[pageSize]=500&sort=order:asc&${PRODUCT_POPULATE}`, ["products"]);
+  const topOf = (slug?: string) => {
+    let s = slug;
+    while (s && catParent.get(s)) s = catParent.get(s);
+    return s;
+  };
+  return (json.data ?? []).map((p: any): CatalogEntry => {
+    const catSlug: string | undefined = p.category?.slug;
+    const kind = TOP_KIND[topOf(catSlug) ?? ""] ?? "product";
+    return {
+      kind,
+      slug: p.slug,
+      title: p.title,
+      headline: p.headline ?? undefined,
+      parentSlug: catSlug,
+      order: p.order ?? undefined,
+      icon: p.icon ?? undefined,
+      tone: p.tone ?? undefined,
+      badge: p.badge ?? undefined,
+      summary: p.summary ?? undefined,
+      highlights: (p.highlights ?? []).map((h: any) => h.text).filter(Boolean),
+      coverImage: p.coverImage?.url ? absolute(p.coverImage.url) : null,
+      gallery: (p.gallery ?? []).map((m: any) => absolute(m.url)),
+      brandSlugs: (p.brands ?? []).map((b: any) => b.slug),
+      description: p.description ?? undefined,
+      specs: p.specs ?? undefined,
+      seo: p.seo ? { metaTitle: p.seo.metaTitle, metaDescription: p.seo.metaDescription } : undefined,
+    };
+  });
+}
 
 export async function getAllEntries(): Promise<CatalogEntry[]> {
-  const json = await sFetch(`/catalog-entries?pagination[pageSize]=200&${POPULATE}`, ["catalog-entries"]);
-  return (json.data ?? []).map(mapEntry);
-}
-
-export async function getEntriesByKind(kind: EntryKind): Promise<CatalogEntry[]> {
-  const json = await sFetch(`/catalog-entries?filters[kind][key][$eq]=${kind}&pagination[pageSize]=200&${POPULATE}`, ["catalog-entries"]);
-  return (json.data ?? []).map(mapEntry);
+  const [parents, cats] = await Promise.all([fetchParentCategories(), fetchCategories()]);
+  // con -> cha, plus cha -> (none); lets fetchProducts walk to the top ancestor.
+  const catParent = new Map<string, string | undefined>([
+    ...parents.map((p) => [p.slug, undefined] as [string, undefined]),
+    ...cats.map((c) => [c.slug, c.parentSlug] as [string, string | undefined]),
+  ]);
+  const prods = await fetchProducts(catParent);
+  return [...parents, ...cats, ...prods];
 }
 
 export async function getBanners(): Promise<HeroBanner[]> {
@@ -96,10 +133,46 @@ export async function getBanners(): Promise<HeroBanner[]> {
   }));
 }
 
-export async function getBrandsRaw(): Promise<Brand[]> {
-  const json = await sFetch(`/brands?pagination[pageSize]=200&populate[logo][fields][0]=url`, ["brands"]);
-  return (json.data ?? []).map((b: any) => ({
-    slug: b.slug, name: b.name, logo: b.logo?.url ? absolute(b.logo.url) : null,
-    showInPartnerStrip: !!b.showInPartnerStrip, website: b.website ?? undefined,
+export type RawHomeSection = {
+  title: string;
+  productSlugs: string[];
+  moreParentSlug?: string; // "Xem thêm" → parent-category page
+  subsections: { title: string; productSlugs: string[]; moreParentSlug?: string }[];
+};
+
+export async function getHomeSections(): Promise<RawHomeSection[]> {
+  const json = await sFetch(
+    `/home-sections?sort=order:asc&pagination[pageSize]=50` +
+      `&populate[products][fields][0]=slug` +
+      `&populate[parentCategory][fields][0]=slug` +
+      `&populate[subsections][populate][products][fields][0]=slug` +
+      `&populate[subsections][populate][parentCategory][fields][0]=slug`,
+    ["home-sections"],
+  );
+  // A section / sub-section is a curated product list + a "Xem thêm" parent-category link.
+  const slugs = (rel: any[]) => (rel ?? []).map((x: any) => x.slug).filter(Boolean);
+  return (json.data ?? []).map((s: any) => ({
+    title: s.title,
+    productSlugs: slugs(s.products),
+    moreParentSlug: s.parentCategory?.slug ?? undefined,
+    subsections: (s.subsections ?? []).map((ss: any) => ({
+      title: ss.title,
+      productSlugs: slugs(ss.products),
+      moreParentSlug: ss.parentCategory?.slug ?? undefined,
+    })),
   }));
+}
+
+export async function getSettings(): Promise<Partial<SiteSettings>> {
+  const json = await sFetch(`/site-setting`, ["site-setting"]);
+  const d = json.data ?? {};
+  return {
+    company: d.company, shortName: d.shortName, slogan: d.slogan, hotline: d.hotline,
+    email: d.email, address: d.address, zaloUrl: d.zaloUrl, mapUrl: d.mapUrl,
+  };
+}
+
+export async function getBrandsRaw(): Promise<Brand[]> {
+  const json = await sFetch(`/brands?pagination[pageSize]=200`, ["brands"]);
+  return (json.data ?? []).map((b: any) => ({ slug: b.slug, name: b.name }));
 }

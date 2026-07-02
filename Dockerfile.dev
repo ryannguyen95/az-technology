@@ -1,0 +1,17 @@
+# Frontend (Next.js) — local development image.
+# Uses Bun (the project's primary package manager; see bun.lock).
+FROM oven/bun:1
+
+WORKDIR /app
+
+# Install deps first for better layer caching. The node_modules dir is shielded
+# from the bind mount by an anonymous volume in docker-compose.yml.
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+
+EXPOSE 3000
+
+# -H 0.0.0.0 so the dev server is reachable from outside the container.
+CMD ["bun", "run", "dev", "--", "-H", "0.0.0.0", "-p", "3000"]

@@ -1,14 +1,11 @@
 {
   "kind": "collectionType",
   "collectionName": "brands",
-  "info": { "singularName": "brand", "pluralName": "brands", "displayName": "Brand" },
+  "info": { "singularName": "brand", "pluralName": "brands", "displayName": "Thương hiệu" },
   "options": { "draftAndPublish": true },
   "attributes": {
     "name": { "type": "string", "required": true },
-    "slug": { "type": "uid", "targetField": "name", "required": true },
-    "logo": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
-    "showInPartnerStrip": { "type": "boolean", "default": true },
-    "website": { "type": "string" },
-    "entries": { "type": "relation", "relation": "manyToMany", "target": "api::catalog-entry.catalog-entry", "mappedBy": "brands" }
+    "slug": { "type": "uid", "targetField": "name" },
+    "products": { "type": "relation", "relation": "manyToMany", "target": "api::product.product", "mappedBy": "brands" }
   }
 }

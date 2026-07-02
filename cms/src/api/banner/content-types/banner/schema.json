@@ -1,7 +1,7 @@
 {
   "kind": "collectionType",
   "collectionName": "banners",
-  "info": { "singularName": "banner", "pluralName": "banners", "displayName": "Banner / Hero Slide" },
+  "info": { "singularName": "banner", "pluralName": "banners", "displayName": "Banner trang chủ" },
   "options": { "draftAndPublish": true },
   "attributes": {
     "title": { "type": "string", "required": true },

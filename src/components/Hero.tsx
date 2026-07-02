@@ -6,69 +6,70 @@ import { useEffect, useState } from "react";
 import type { HeroBanner } from "@/lib/types";
 import { Icon } from "./Icon";
 
-function FallbackHero() {
-  // Shown until an editor uploads at least one banner image in the CMS.
+// Image-only banner carousel (matches the prototype: each slide is just an image).
+// When a banner has no uploaded image, we render a neutral placeholder instead of
+// an error or any marketing copy.
+
+function Placeholder({ title }: { title?: string }) {
   return (
-    <section className="pt-7 pb-3">
-      <div className="max-w-site mx-auto px-4">
-        <div className="relative overflow-hidden rounded-[28px] az-grad-soft border border-primary-100 shadow-card px-8 py-14 lg:py-20 text-center">
-          <div className="absolute inset-0 az-dots-ink opacity-50" />
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 bg-white/70 backdrop-blur border border-primary-100 rounded-full px-3.5 py-1.5 text-[12px] font-extrabold text-primary mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" /> Giải pháp CNTT toàn diện
-            </div>
-            <h1 className="text-3xl sm:text-4xl xl:text-[44px] font-extrabold leading-[1.08] tracking-tight text-navy">
-              Hạ tầng số <span className="az-text-grad">vững chắc</span> cho mọi quy mô
-            </h1>
-            <p className="mt-4 text-[14.5px] sm:text-base text-slate-600 max-w-xl mx-auto">
-              Phần mềm bản quyền · Phần cứng chính hãng · Hạ tầng Data Center · Dịch vụ IT &amp; Cloud.
-            </p>
-            <Link
-              href="/danh-muc/phan-mem"
-              className="mt-7 inline-flex items-center gap-2 bg-primary text-white font-bold text-sm rounded-full pl-5 pr-4 py-3 shadow-[0_10px_24px_-8px_rgba(0,86,179,.7)] hover:bg-primary-700 transition-all"
-            >
-              Khám phá sản phẩm <Icon name="arrowRight" className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
+    <div className="absolute inset-0 az-grad-navy grid place-items-center">
+      <div className="absolute inset-0 az-dots opacity-30" />
+      <div className="relative flex flex-col items-center gap-3 text-white/90">
+        <span className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur grid place-items-center">
+          <Icon name="quote" className="w-8 h-8 text-cyan-300" stroke={1.5} />
+        </span>
+        {title && <span className="text-sm font-semibold text-white/70">{title}</span>}
       </div>
-    </section>
+    </div>
   );
 }
 
 export function Hero({ banners }: { banners?: HeroBanner[] }) {
-  const slides = (banners ?? []).filter((b) => b.image);
+  // Show every banner; a missing image falls back to the placeholder above.
+  const slides: HeroBanner[] = banners && banners.length
+    ? banners
+    : [{ id: "placeholder", title: "AZ Technology", image: null }];
+
   const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (slides.length < 2) return;
-    const id = setInterval(() => setI((p) => (p + 1) % slides.length), 5500);
+    if (paused || slides.length < 2) return;
+    const id = setInterval(() => setI((p) => (p + 1) % slides.length), 5000);
     return () => clearInterval(id);
-  }, [slides.length]);
-
-  if (!slides.length) return <FallbackHero />;
+  }, [paused, slides.length]);
 
   const i2 = Math.min(i, slides.length - 1);
+  const go = (next: number) => setI((next + slides.length) % slides.length);
 
   return (
     <section className="pt-7 pb-3">
       <div className="max-w-site mx-auto px-4">
-        <div className="relative overflow-hidden rounded-[28px] shadow-card">
+        <div
+          className="reveal group relative overflow-hidden rounded-[24px] shadow-card bg-mist select-none"
+          style={{ aspectRatio: "1920 / 640" }}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           {slides.map((b, k) => {
-            const inner = (
+            const inner = b.image ? (
               <Image
-                src={b.image as string}
+                src={b.image}
                 alt={b.title}
                 fill
                 priority={k === 0}
                 sizes="(min-width: 1240px) 1240px, 100vw"
                 className="object-cover"
               />
+            ) : (
+              <Placeholder title={b.title} />
             );
             return (
               <div
                 key={b.id}
-                className={`relative h-[200px] sm:h-[300px] lg:h-[380px] transition-opacity duration-500 ${k === i2 ? "opacity-100" : "opacity-0 absolute inset-0 pointer-events-none"}`}
+                aria-hidden={k !== i2}
+                className="absolute inset-0 transition-opacity duration-700 ease-out"
+                style={{ opacity: k === i2 ? 1 : 0, pointerEvents: k === i2 ? "auto" : "none" }}
               >
                 {b.ctaHref ? (
                   <Link href={b.ctaHref} aria-label={b.ctaLabel || b.title} className="block w-full h-full">
@@ -82,16 +83,32 @@ export function Hero({ banners }: { banners?: HeroBanner[] }) {
           })}
 
           {slides.length > 1 && (
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-4 z-10 flex gap-2">
-              {slides.map((_, k) => (
-                <button
-                  key={k}
-                  onClick={() => setI(k)}
-                  aria-label={`Banner ${k + 1}`}
-                  className={`h-1.5 rounded-full transition-all ${k === i2 ? "w-7 bg-white" : "w-2.5 bg-white/50 hover:bg-white/80"}`}
-                />
-              ))}
-            </div>
+            <>
+              <button
+                onClick={() => go(i2 - 1)}
+                aria-label="Banner trước"
+                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 grid place-items-center rounded-full bg-white/85 backdrop-blur text-navy shadow-card opacity-0 group-hover:opacity-100 hover:bg-white transition-all"
+              >
+                <Icon name="chevronLeft" className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => go(i2 + 1)}
+                aria-label="Banner kế tiếp"
+                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 grid place-items-center rounded-full bg-white/85 backdrop-blur text-navy shadow-card opacity-0 group-hover:opacity-100 hover:bg-white transition-all"
+              >
+                <Icon name="chevronRight" className="w-5 h-5" />
+              </button>
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-4 sm:bottom-5 z-20 flex gap-2">
+                {slides.map((_, k) => (
+                  <button
+                    key={k}
+                    onClick={() => setI(k)}
+                    aria-label={`Chuyển tới banner ${k + 1}`}
+                    className={`h-1.5 rounded-full transition-all ${k === i2 ? "w-7 bg-white" : "w-2.5 bg-white/50 hover:bg-white/80"}`}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

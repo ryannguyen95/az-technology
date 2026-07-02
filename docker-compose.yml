@@ -1,0 +1,124 @@
+# Local development stack: Next.js frontend + Strapi CMS.
+#
+#   docker compose up            # build (first run) + start both
+#   docker compose up --build    # force rebuild after dependency changes
+#   docker compose down          # stop
+#
+# Frontend → http://localhost:3000
+# CMS admin → http://localhost:1337/admin   (first run prompts for an admin user)
+#
+# The frontend defaults to DATA_SOURCE=seed, so it renders fully on its own.
+# To pull live content from Strapi instead, see the note at the bottom of this file.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: strapi
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+    ports:
+      - "5432:5432"   # exposed for local inspection; remove if not needed
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U strapi -d strapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  cms:
+    build:
+      context: ./cms
+      dockerfile: Dockerfile.dev
+    ports:
+      - "1337:1337"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      # Postgres connection (see db service above).
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_NAME: strapi
+      DATABASE_USERNAME: strapi
+      DATABASE_PASSWORD: strapi
+      DATABASE_SSL: "false"
+      NODE_ENV: development
+      # Re-run the seed on boot: `SEED=force docker compose up -d cms`. Empty = seed
+      # only when the catalog is empty. Upserts by slug, so forcing is safe.
+      SEED: ${SEED:-}
+      # Cloudflare R2 media storage (S3-compatible). Leave blank to use local disk.
+      # Values come from the root .env (compose reads it automatically).
+      R2_ENDPOINT: ${R2_ENDPOINT:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
+      # Dev-only secrets. Replace for anything resembling production.
+      APP_KEYS: devKey1,devKey2
+      API_TOKEN_SALT: dev-api-token-salt
+      ADMIN_JWT_SECRET: dev-admin-jwt-secret
+      TRANSFER_TOKEN_SALT: dev-transfer-token-salt
+      JWT_SECRET: dev-jwt-secret
+      ENCRYPTION_KEY: dev-encryption-key
+      # Poll the filesystem so hot reload works on bind-mounted code (esp. macOS).
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./cms:/app          # live source for hot reload
+      - cms_node_modules:/app/node_modules   # keep container's installed deps
+      - cms_uploads:/app/public/uploads      # persist uploaded media
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:1337/_health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      # "strapi" = live CMS content. Set to "seed" for the static local taxonomy.
+      DATA_SOURCE: ${DATA_SOURCE:-strapi}
+      # API calls run server-side → reach Strapi via the internal Docker network.
+      STRAPI_URL: http://cms:1337
+      # Image/media URLs are loaded by the browser → must hit the published port.
+      STRAPI_PUBLIC_URL: http://localhost:1337
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN:-}
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      LEAD_TO_EMAIL: ${LEAD_TO_EMAIL:-nhu.trang@az-technology.vn}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
+      NODE_ENV: development
+      # Poll for file changes so Next.js Fast Refresh works through the bind mount.
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - web_node_modules:/app/node_modules
+      - web_next_cache:/app/.next
+      - /app/cms          # don't let the web watcher poll the CMS subtree
+    depends_on:
+      - cms
+
+volumes:
+  db_data:
+  cms_node_modules:
+  cms_uploads:
+  web_node_modules:
+  web_next_cache:
+
+# ── Frontend ↔ Strapi wiring (no /etc/hosts needed) ───────────────────────────
+# The adapter (src/lib/data/strapi.ts) uses two bases:
+#   STRAPI_URL        → server-side API calls, via Docker DNS (http://cms:1337)
+#   STRAPI_PUBLIC_URL → media URLs the browser loads, via the published port
+#                       (http://localhost:1337)
+# This split lets both the Next server and your browser reach Strapi correctly
+# without editing /etc/hosts. To fall back to static seed data instead:
+#   DATA_SOURCE=seed docker compose up

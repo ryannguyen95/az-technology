@@ -1,7 +1,7 @@
 {
   "kind": "collectionType",
   "collectionName": "quote_requests",
-  "info": { "singularName": "quote-request", "pluralName": "quote-requests", "displayName": "Quote Request" },
+  "info": { "singularName": "quote-request", "pluralName": "quote-requests", "displayName": "Yêu cầu báo giá" },
   "options": { "draftAndPublish": false },
   "attributes": {
     "name": { "type": "string", "required": true },

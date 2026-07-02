@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EntryDetail } from "@/components/EntryDetail";
-import { getEntriesByKind, getEntryForPrefix } from "@/lib/data";
-import { formatVND } from "@/lib/format";
+import { getBreadcrumb, getEntriesByKind, getEntryForPrefix } from "@/lib/data";
 import { stripHtml } from "@/lib/strip";
 
 export const revalidate = 3600;
@@ -24,26 +23,20 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const entry = await getEntryForPrefix("san-pham", slug);
   if (!entry) notFound();
 
-  // Product JSON-LD. Offer ONLY when a real price exists (design review: no fake price/rating).
+  // Product JSON-LD (quote-driven: no price/rating).
   const ld: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: entry.title,
     description: stripHtml(entry.summary),
   };
-  if (entry.priceMode === "show" && formatVND(entry.priceNew)) {
-    ld.offers = {
-      "@type": "Offer",
-      priceCurrency: "VND",
-      price: entry.priceNew,
-      availability: "https://schema.org/InStock",
-    };
-  }
+
+  const crumbs = await getBreadcrumb(entry);
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <EntryDetail entry={entry} crumbs={[{ label: "Phần mềm", href: "/danh-muc/phan-mem" }, { label: entry.title }]} />
+      <EntryDetail entry={entry} crumbs={crumbs} />
     </>
   );
 }

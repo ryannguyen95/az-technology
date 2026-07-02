@@ -6,14 +6,25 @@ import { Icon } from "./Icon";
 
 /* Detail-page visual. Shows an image slider when the entry has images
    (coverImage + gallery), otherwise falls back to the icon-on-gradient panel. */
+function Badge({ badge }: { badge?: string }) {
+  if (!badge) return null;
+  return (
+    <span className="absolute top-4 right-4 z-10 text-sm font-extrabold px-3 py-1.5 rounded-xl bg-sale text-white whitespace-nowrap">
+      {badge}
+    </span>
+  );
+}
+
 export function EntryGallery({
   images,
   icon,
   title,
+  badge,
 }: {
   images: string[];
   icon?: string;
   title: string;
+  badge?: string;
 }) {
   const [active, setActive] = useState(0);
 
@@ -23,6 +34,7 @@ export function EntryGallery({
       <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-xl2 az-grad md:h-80">
         <div className="absolute inset-0 az-dots opacity-40" />
         <Icon name={icon} className="h-24 w-24 text-white/90" />
+        <Badge badge={badge} />
       </div>
     );
   }
@@ -43,6 +55,7 @@ export function EntryGallery({
           className="object-contain p-4"
           priority={i === 0}
         />
+        <Badge badge={badge} />
 
         {multiple && (
           <>

@@ -1,24 +1,11 @@
 import Link from "next/link";
-import { settings } from "@/lib/data";
+import { getFooterNav, getSettings } from "@/lib/data";
 import { Icon } from "./Icon";
 import { AZLogo } from "./Cards";
 
-const tel = settings.hotline.replace(/\s/g, "");
-
-const COLS: { title: string; links: string[] }[] = [
-  { title: "Tin công ty", links: ["Giới thiệu công ty", "Tin tuyển dụng", "Liên hệ – góp ý", "Hóa đơn điện tử", "Bán hàng số lượng lớn", "Bản đồ"] },
-  { title: "Chính sách", links: ["Chính sách bảo mật", "Bảo hành – bảo trì", "Chính sách đổi trả", "Điều khoản sử dụng"] },
-  { title: "Hướng dẫn", links: ["Hướng dẫn mua hàng", "Câu hỏi thường gặp", "Tài liệu kỹ thuật", "Liên hệ hỗ trợ"] },
-];
-
-function linkFor(label: string): string {
-  if (label.includes("Bản đồ")) return "/lien-he#map";
-  if (label.includes("bảo mật")) return "/chinh-sach-bao-mat";
-  if (label.includes("Giới thiệu")) return "/ve-az";
-  return "/lien-he";
-}
-
-export function Footer() {
+export async function Footer() {
+  const [cols, settings] = await Promise.all([getFooterNav(), getSettings()]);
+  const tel = settings.hotline.replace(/\s/g, "");
   return (
     <footer className="bg-navy-deep text-white/80">
       <div className="max-w-site mx-auto px-4 py-14">
@@ -38,13 +25,13 @@ export function Footer() {
               </Link>
             </div>
           </div>
-          {COLS.map((c, i) => (
+          {cols.map((c, i) => (
             <div key={i}>
               <h4 className="font-extrabold text-white text-[14px] mb-3.5 tracking-wide">{c.title}</h4>
               <ul className="space-y-2.5 text-[13.5px]">
                 {c.links.map((l, j) => (
                   <li key={j}>
-                    <Link href={linkFor(l)} className="text-white/65 hover:text-cyan-300 transition-colors">{l}</Link>
+                    <Link href={l.href} className="text-white/65 hover:text-cyan-300 transition-colors">{l.label}</Link>
                   </li>
                 ))}
               </ul>

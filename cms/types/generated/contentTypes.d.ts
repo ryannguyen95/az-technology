@@ -443,7 +443,7 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
 export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
   collectionName: 'banners';
   info: {
-    displayName: 'Banner / Hero Slide';
+    displayName: 'Banner trang ch\u1EE7';
     pluralName: 'banners';
     singularName: 'banner';
   };
@@ -476,7 +476,7 @@ export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
 export interface ApiBrandBrand extends Struct.CollectionTypeSchema {
   collectionName: 'brands';
   info: {
-    displayName: 'Brand';
+    displayName: 'Th\u01B0\u01A1ng hi\u1EC7u';
     pluralName: 'brands';
     singularName: 'brand';
   };
@@ -487,85 +487,180 @@ export interface ApiBrandBrand extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    entries: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::catalog-entry.catalog-entry'
-    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::brand.brand'> &
       Schema.Attribute.Private;
-    logo: Schema.Attribute.Media<'images'>;
     name: Schema.Attribute.String & Schema.Attribute.Required;
+    products: Schema.Attribute.Relation<'manyToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
-    showInPartnerStrip: Schema.Attribute.Boolean &
-      Schema.Attribute.DefaultTo<true>;
-    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    slug: Schema.Attribute.UID<'name'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    website: Schema.Attribute.String;
   };
 }
 
-export interface ApiCatalogEntryCatalogEntry
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'catalog_entries';
+export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
+  collectionName: 'categories';
   info: {
-    description: 'Unified entry: category, solution, service, software, or product.';
-    displayName: 'Catalog Entry';
-    pluralName: 'catalog-entries';
-    singularName: 'catalog-entry';
+    description: 'Danh m\u1EE5c c\u1EA5p 2 (Microsoft, Adobe, M\u00E1y t\u00EDnh, Data Center\u2026). M\u1ED7i danh m\u1EE5c con thu\u1ED9c v\u1EC1 m\u1ED9t Danh m\u1EE5c cha. S\u1EA3n ph\u1EA9m ch\u1EC9 ch\u1ECDn m\u1ED9t Danh m\u1EE5c con.';
+    displayName: 'Danh m\u1EE5c con';
+    pluralName: 'categories';
+    singularName: 'category';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'defaultHtml';
+        }
+      >;
+    icon: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::category.category'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    parent: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::parent-category.parent-category'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'title'>;
+    summary: Schema.Attribute.Text;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiHomeSectionHomeSection extends Struct.CollectionTypeSchema {
+  collectionName: 'home_sections';
+  info: {
+    description: "C\u00E1c kh\u1ED1i s\u1EA3n ph\u1EA9m tr\u00EAn trang ch\u1EE7. Ch\u1ECDn s\u1EA3n ph\u1EA9m tr\u1EF1c ti\u1EBFp, ho\u1EB7c chia th\u00E0nh nhi\u1EC1u m\u1EE5c con. Trang ch\u1EE7 hi\u1EC3n th\u1ECB 5 s\u1EA3n ph\u1EA9m \u0111\u1EA7u; b\u1EA5m 'Xem t\u1EA5t c\u1EA3' \u0111\u1EC3 xem h\u1EBFt.";
+    displayName: 'M\u1EE5c trang ch\u1EE7';
+    pluralName: 'home-sections';
+    singularName: 'home-section';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::home-section.home-section'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    parentCategory: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::parent-category.parent-category'
+    >;
+    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
+    publishedAt: Schema.Attribute.DateTime;
+    subsections: Schema.Attribute.Component<'home.subsection', true>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiParentCategoryParentCategory
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'parent_categories';
+  info: {
+    description: 'Danh m\u1EE5c c\u1EA5p 1 \u2014 nh\u00F3m l\u1EDBn nh\u1EA5t: Ph\u1EA7n m\u1EC1m, Ph\u1EA7n c\u1EE9ng, D\u1ECBch v\u1EE5 IT, Gi\u1EA3i ph\u00E1p. M\u1ED7i Danh m\u1EE5c con thu\u1ED9c v\u1EC1 m\u1ED9t Danh m\u1EE5c cha.';
+    displayName: 'Danh m\u1EE5c cha';
+    pluralName: 'parent-categories';
+    singularName: 'parent-category';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    icon: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::parent-category.parent-category'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'title'>;
+    summary: Schema.Attribute.Text;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiProductProduct extends Struct.CollectionTypeSchema {
+  collectionName: 'products';
+  info: {
+    description: 'S\u1EA3n ph\u1EA9m / ph\u1EA7n m\u1EC1m / d\u1ECBch v\u1EE5 / gi\u1EA3i ph\u00E1p. M\u1ED7i s\u1EA3n ph\u1EA9m thu\u1ED9c v\u1EC1 m\u1ED9t Danh m\u1EE5c.';
+    displayName: 'S\u1EA3n ph\u1EA9m';
+    pluralName: 'products';
+    singularName: 'product';
   };
   options: {
     draftAndPublish: true;
   };
   attributes: {
     badge: Schema.Attribute.String;
-    body: Schema.Attribute.DynamicZone<
-      ['blocks.rich-text', 'blocks.spec-accordion', 'blocks.faq']
-    >;
     brands: Schema.Attribute.Relation<'manyToMany', 'api::brand.brand'>;
-    children: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::catalog-entry.catalog-entry'
-    >;
+    category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
     coverImage: Schema.Attribute.Media<'images'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    description: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'defaultHtml';
+        }
+      >;
     gallery: Schema.Attribute.Media<'images', true>;
+    headline: Schema.Attribute.Text;
+    highlights: Schema.Attribute.Component<'blocks.highlight', true>;
     icon: Schema.Attribute.String;
-    kind: Schema.Attribute.Relation<'manyToOne', 'api::entry-kind.entry-kind'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::catalog-entry.catalog-entry'
+      'api::product.product'
     > &
       Schema.Attribute.Private;
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    parent: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::catalog-entry.catalog-entry'
-    >;
-    priceFromLabel: Schema.Attribute.String;
-    priceMode: Schema.Attribute.Enumeration<['show', 'contact']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'contact'>;
-    priceNew: Schema.Attribute.Integer;
-    priceOld: Schema.Attribute.Integer;
     publishedAt: Schema.Attribute.DateTime;
-    rating: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 5;
-          min: 0;
-        },
-        number
-      >;
-    reviews: Schema.Attribute.Integer;
     seo: Schema.Attribute.Component<'seo.meta', false>;
-    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    slug: Schema.Attribute.UID<'title'>;
+    specs: Schema.Attribute.RichText &
+      Schema.Attribute.CustomField<
+        'plugin::ckeditor5.CKEditor',
+        {
+          preset: 'defaultHtml';
+        }
+      >;
     summary: Schema.Attribute.RichText &
       Schema.Attribute.CustomField<
         'plugin::ckeditor5.CKEditor',
@@ -584,81 +679,11 @@ export interface ApiCatalogEntryCatalogEntry
   };
 }
 
-export interface ApiEntryKindEntryKind extends Struct.CollectionTypeSchema {
-  collectionName: 'entry_kinds';
-  info: {
-    description: 'Editable list of catalog-entry kinds (category, solution, service, software, product\u2026).';
-    displayName: 'Entry Kind';
-    pluralName: 'entry-kinds';
-    singularName: 'entry-kind';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    entries: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::catalog-entry.catalog-entry'
-    >;
-    key: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
-    label: Schema.Attribute.String & Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::entry-kind.entry-kind'
-    > &
-      Schema.Attribute.Private;
-    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
-export interface ApiNewsNews extends Struct.CollectionTypeSchema {
-  collectionName: 'news_posts';
-  info: {
-    displayName: 'News Post';
-    pluralName: 'news-posts';
-    singularName: 'news';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    body: Schema.Attribute.RichText;
-    cover: Schema.Attribute.Media<'images'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    excerpt: Schema.Attribute.Text;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::news.news'> &
-      Schema.Attribute.Private;
-    newsCategory: Schema.Attribute.Enumeration<
-      ['chia-se', 'tin-cong-nghe', 'thu-thuat', 'tin-cong-ty']
-    > &
-      Schema.Attribute.DefaultTo<'tin-cong-nghe'>;
-    publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
-    title: Schema.Attribute.String & Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
 export interface ApiQuoteRequestQuoteRequest
   extends Struct.CollectionTypeSchema {
   collectionName: 'quote_requests';
   info: {
-    displayName: 'Quote Request';
+    displayName: 'Y\u00EAu c\u1EA7u b\u00E1o gi\u00E1';
     pluralName: 'quote-requests';
     singularName: 'quote-request';
   };
@@ -695,7 +720,7 @@ export interface ApiQuoteRequestQuoteRequest
 export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
   collectionName: 'site_setting';
   info: {
-    displayName: 'Site Settings';
+    displayName: 'C\u1EA5u h\u00ECnh website';
     pluralName: 'site-settings';
     singularName: 'site-setting';
   };
@@ -1240,9 +1265,10 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::banner.banner': ApiBannerBanner;
       'api::brand.brand': ApiBrandBrand;
-      'api::catalog-entry.catalog-entry': ApiCatalogEntryCatalogEntry;
-      'api::entry-kind.entry-kind': ApiEntryKindEntryKind;
-      'api::news.news': ApiNewsNews;
+      'api::category.category': ApiCategoryCategory;
+      'api::home-section.home-section': ApiHomeSectionHomeSection;
+      'api::parent-category.parent-category': ApiParentCategoryParentCategory;
+      'api::product.product': ApiProductProduct;
       'api::quote-request.quote-request': ApiQuoteRequestQuoteRequest;
       'api::site-setting.site-setting': ApiSiteSettingSiteSetting;
       'plugin::content-releases.release': PluginContentReleasesRelease;

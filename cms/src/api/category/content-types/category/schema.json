@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "categories",
+  "info": {
+    "singularName": "category",
+    "pluralName": "categories",
+    "displayName": "Danh mục con",
+    "description": "Danh mục cấp 2 (Microsoft, Adobe, Máy tính, Data Center…). Mỗi danh mục con thuộc về một Danh mục cha. Sản phẩm chỉ chọn một Danh mục con."
+  },
+  "options": { "draftAndPublish": true },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "slug": { "type": "uid", "targetField": "title" },
+    "parent": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::parent-category.parent-category"
+    },
+    "icon": { "type": "string" },
+    "order": { "type": "integer", "default": 0 },
+    "summary": { "type": "text" },
+    "description": {
+      "type": "customField",
+      "customField": "plugin::ckeditor5.CKEditor",
+      "options": { "preset": "defaultHtml" }
+    }
+  }
+}

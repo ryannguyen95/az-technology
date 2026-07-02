@@ -10,6 +10,44 @@ B2B IT-solutions website for AZ IT Solutions & Services. Two apps:
 - **Frontend:** Node 20+ (works on 25) or Bun. Uses `bun`/`npm`.
 - **Strapi:** Node **20–24 only** (does NOT run on Node 25+). Use `nvm use 22`.
 
+## Run everything with Docker (recommended)
+
+Starts the whole stack — Postgres, Strapi CMS, and the Next.js frontend — with one command. Only Docker Desktop is required (no Node/Bun/yarn on the host).
+
+```bash
+docker compose up --build      # first run (builds images, then starts)
+docker compose up              # subsequent runs
+```
+
+Services:
+
+| URL | What |
+| --- | --- |
+| http://localhost:3000 | Frontend |
+| http://localhost:1337/admin | Strapi admin (first run prompts you to create an admin user) |
+| localhost:5432 | Postgres (`strapi`/`strapi`/`strapi`) |
+
+Boot order is handled automatically: Postgres starts first, Strapi waits until the
+DB is healthy, then the frontend starts. **Hot reload** is on — edits to frontend or
+CMS source reload live.
+
+Common commands:
+
+```bash
+docker compose up -d              # start in the background
+docker compose logs -f web        # follow frontend logs (or: cms, db)
+docker compose down               # stop (data persists in volumes)
+docker compose down -v            # stop AND wipe the database + uploads
+docker compose up --build         # rebuild after changing dependencies
+```
+
+By default the frontend serves local seed data (`DATA_SOURCE=seed`). To render live
+Strapi content instead, see the integration note at the bottom of `docker-compose.yml`.
+
+---
+
+The sections below run each app directly on your host instead (without Docker).
+
 ## Run the frontend
 
 ```bash
@@ -33,8 +71,8 @@ components never see Strapi shapes (adapter in `src/lib/data/strapi.ts`).
 ```bash
 cd cms
 nvm use 22           # REQUIRED — Strapi rejects Node 25+
-npm install
-npm run develop      # http://localhost:1337/admin
+yarn install
+yarn develop         # http://localhost:1337/admin
 ```
 
 On first boot the bootstrap (`cms/src/index.ts`):

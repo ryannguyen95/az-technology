@@ -74,7 +74,7 @@ export const whyAZ = [
 
 // helper to build an entry
 function E(e: Partial<CatalogEntry> & Pick<CatalogEntry, "kind" | "slug" | "title">): CatalogEntry {
-  return { priceMode: "contact", ...e };
+  return { ...e };
 }
 
 const TONES: Tone[] = ["blue", "cyan", "green", "navy", "red"];
@@ -182,7 +182,7 @@ const solutionsRaw: Sol[] = [
 ];
 
 const solutions: CatalogEntry[] = solutionsRaw.map(([title, slug, icon, t, items], i) =>
-  E({ kind: "solution", slug, title, icon, tone: t, order: i + 1, featured: i < 4,
+  E({ kind: "solution", slug, title, icon, tone: t, order: i + 1,
       badge: i === 0 ? "Tiêu biểu" : undefined,
       summary: `${(items[0] || "").slice(0, 80)}…` }),
 );
@@ -289,7 +289,6 @@ export const nav: NavItem[] = [
       { heading: "Bảo mật & Cloud", links: solutions.slice(4).map((s) => ({ label: s.title, href: entryHref(s.kind, s.slug) })) },
     ],
   },
-  { label: "Tin tức", href: "/tin-tuc" },
   { label: "Về AZ", href: "/ve-az" },
   { label: "Liên hệ", href: "/lien-he" },
 ];
@@ -297,8 +296,7 @@ export const nav: NavItem[] = [
 export const footerLinks = {
   company: [
     { label: "Giới thiệu công ty", href: "/ve-az" },
-    { label: "Tin tức", href: "/tin-tuc" },
-    { label: "Liên hệ – góp ý", href: "/lien-he" },
+      { label: "Liên hệ – góp ý", href: "/lien-he" },
     { label: "Bán hàng số lượng lớn", href: "/lien-he" },
   ],
   policy: [

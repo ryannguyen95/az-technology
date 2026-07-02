@@ -1,0 +1,11 @@
+node_modules
+build
+dist
+.cache
+.tmp
+.git
+*.log
+.env
+.env*.local
+.DS_Store
+public/uploads/*

@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { settings } from "@/lib/data";
 import { Icon } from "./Icon";
-
-const tel = settings.hotline.replace(/\s/g, "");
+import { useSettings } from "./SettingsProvider";
 
 function BrandIcon({ name, className = "w-6 h-6" }: { name: string; className?: string }) {
   if (name === "zalo")
@@ -32,6 +30,8 @@ function BrandIcon({ name, className = "w-6 h-6" }: { name: string; className?: 
 }
 
 export function FloatingButtons() {
+  const settings = useSettings();
+  const tel = settings.hotline.replace(/\s/g, "");
   const [top, setTop] = useState(false);
   useEffect(() => {
     const onScroll = () => setTop(window.scrollY > 500);
