@@ -1,0 +1,132 @@
+/* AZ Technology — base styles & utilities */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --az-primary: #0056B3;
+  --az-cyan: #00D1FF;
+  --az-navy: #002D5A;
+}
+
+* { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: #0f1b2d;
+  background: #F8FAFC;
+  margin: 0;
+}
+
+/* Brand gradient helpers */
+.az-grad { background: linear-gradient(120deg, var(--az-primary) 0%, #0a78d6 48%, var(--az-cyan) 130%); }
+.az-grad-navy { background: linear-gradient(125deg, var(--az-navy) 0%, #064b8e 60%, var(--az-primary) 120%); }
+.az-grad-soft { background: linear-gradient(120deg, #eef6ff 0%, #e6fbff 100%); }
+.az-text-grad {
+  background: linear-gradient(100deg, var(--az-primary), var(--az-cyan));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Mesh / dotted texture for hero */
+.az-mesh {
+  background-image:
+    radial-gradient(60% 80% at 85% 8%, rgba(0,209,255,.30), transparent 60%),
+    radial-gradient(45% 60% at 12% 95%, rgba(0,209,255,.16), transparent 60%);
+}
+.az-dots {
+  background-image: radial-gradient(rgba(255,255,255,.16) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+.az-dots-ink {
+  background-image: radial-gradient(rgba(0,45,90,.07) 1px, transparent 1.4px);
+  background-size: 20px 20px;
+}
+
+/* Cards */
+.az-card { transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease; }
+.az-card:hover { transform: translateY(-4px); }
+
+/* Global card hover/press — subtle blue tint on any white card */
+.bg-white.rounded-2xl,
+.bg-white.rounded-xl {
+  transition: background-color .2s ease, box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+}
+.bg-white.rounded-2xl:hover,
+.bg-white.rounded-xl:hover {
+  background-color: #eef5fd !important;
+}
+.bg-white.rounded-2xl:active,
+.bg-white.rounded-xl:active {
+  background-color: #e0ecfb !important;
+}
+/* Exclude large containers from the card hover tint */
+.bg-white.no-card-tint:hover,
+.bg-white.no-card-tint:active,
+.no-card-tint .bg-white:hover,
+.no-card-tint .bg-white:active { background-color: #fff !important; }
+
+/* Reveal-on-scroll — transform-only so content is NEVER hidden (capture/print/paused-tab safe) */
+.reveal { transform: translateY(22px); transition: transform .7s cubic-bezier(.2,.7,.2,1); will-change: transform; }
+.reveal.in { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transform: none !important; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* Mega menu animation */
+.mega-panel { transform-origin: top center; }
+.mega-enter { animation: megaIn .2s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes megaIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* Skeleton shimmer for placeholder images */
+.az-skeleton { position: relative; overflow: hidden; }
+.az-skeleton::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  transform: translateX(-100%); animation: shimmerMove 1.8s infinite;
+}
+@keyframes shimmerMove { 100% { transform: translateX(100%); } }
+
+/* Custom scrollbar inside mega menu columns */
+.az-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.az-scroll::-webkit-scrollbar-thumb { background: #cdd9e7; border-radius: 999px; }
+
+/* Line clamp helpers */
+.clamp-1 { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+.clamp-2 { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.clamp-3 { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* Hide scrollbar utility (carousels) */
+.no-sb::-webkit-scrollbar { display: none; }
+.no-sb { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Focus ring for accessibility */
+:where(a,button,input,textarea,select):focus-visible {
+  outline: 2px solid #00D1FF; outline-offset: 2px; border-radius: 6px;
+}
+
+/* ---- Tweak override layer: map brand utilities to CSS variables ---- */
+body .bg-primary { background-color: var(--az-primary) !important; }
+body .bg-primary-700, body .hover\:bg-primary-700:hover { background-color: color-mix(in srgb, var(--az-primary) 82%, #000) !important; }
+body .bg-primary-50 { background-color: color-mix(in srgb, var(--az-primary) 7%, #fff) !important; }
+body .bg-primary-100, body .hover\:bg-primary-100:hover { background-color: color-mix(in srgb, var(--az-primary) 14%, #fff) !important; }
+body .hover\:bg-primary-50:hover { background-color: color-mix(in srgb, var(--az-primary) 7%, #fff) !important; }
+body .text-primary { color: var(--az-primary) !important; }
+body .border-primary { border-color: var(--az-primary) !important; }
+body .border-primary-200, body .hover\:border-primary-200:hover { border-color: color-mix(in srgb, var(--az-primary) 35%, #fff) !important; }
+body .bg-cyan-400 { background-color: var(--az-cyan) !important; }
+body .hover\:bg-cyan-300:hover { background-color: color-mix(in srgb, var(--az-cyan) 75%, #fff) !important; }
+body .text-cyan-600 { color: color-mix(in srgb, var(--az-cyan) 78%, #0a3f7c) !important; }
+body .bg-navy, body .hover\:bg-navy-light:hover { }
+
+/* ---- Hero/CTA gradient style variants (Tweaks) ---- */
+html[data-hero-style="deep"] .az-grad { background: linear-gradient(125deg, var(--az-navy) 0%, var(--az-primary) 68%, #0a78d6 120%); }
+html[data-hero-style="vivid"] .az-grad { background: linear-gradient(110deg, var(--az-primary) 0%, var(--az-cyan) 115%); }
+
+/* ---- Motion off ---- */
+html.az-no-motion * { animation: none !important; }
+html.az-no-motion .reveal { opacity: 1 !important; transform: none !important; }
+html.az-no-motion .az-card:hover { transform: none !important; }
+
+/* Marquee for partner logos */
+.az-marquee { display: flex; gap: 3.5rem; width: max-content; animation: marquee 32s linear infinite; }
+.az-marquee-wrap:hover .az-marquee { animation-play-state: paused; }
+@keyframes marquee { to { transform: translateX(-50%); } }
