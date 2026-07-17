@@ -1,38 +1,45 @@
 import Link from "next/link";
 import type { HomeSection } from "@/lib/types";
 import { toCard } from "@/lib/card";
-import { getCategoryTiles } from "@/lib/data";
 import { SectionHeading } from "./SectionHeading";
 import { CategoryTile } from "./Cards";
-import { Icon } from "./Icon";
 import { HomeProductExpander } from "./HomeProductExpander";
+import { Icon } from "./Icon";
 
-export async function CategoryTilesSection() {
-  const tiles = await getCategoryTiles();
-  return (
-    <section className="py-14">
-      <div className="max-w-site mx-auto px-4">
-        <div className="reveal">
-          <SectionHeading title="Khám phá theo nhóm giải pháp" />
-        </div>
-        <div className="reveal mt-8 grid grid-cols-3 sm:grid-cols-5 gap-4">
-          {tiles.map((tile) => (
-            <CategoryTile key={tile.href} tile={tile} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Renders the CMS-configured homepage sections. Each section (or its sub-sections)
-// is one product list; the first 5 show, the rest reveal inline via "Xem tất cả".
-// Background alternates automatically (no per-section config).
+// Renders the CMS-configured homepage sections (Strapi dynamic zone `home-page.sections`).
+// Each entry is either a `product-list` (one product list, optionally split into
+// sub-sections — the first 5 show, the rest reveal inline via "Xem tất cả") or a
+// `category-list` (a grid of category tiles, e.g. "Khám phá theo nhóm giải pháp").
+// Background alternates between product-list sections only (matches the previous
+// layout, where the category tiles grid always sat on the plain page background).
 export function HomeSections({ sections }: { sections: HomeSection[] }) {
-  const visible = sections.filter((s) => s.products.length || s.subsections.some((ss) => ss.products.length));
+  const visible = sections.filter((s) =>
+    s.type === "category-list" ? s.tiles.length : s.products.length || s.subsections.some((ss) => ss.products.length)
+  );
+
+  let productIndex = -1;
+
   return (
     <>
       {visible.map((s, i) => {
+        if (s.type === "category-list") {
+          return (
+            <section key={i} className="py-14">
+              <div className="max-w-site mx-auto px-4">
+                <div className="reveal">
+                  <SectionHeading title={s.title} />
+                </div>
+                <div className="reveal mt-8 grid grid-cols-3 sm:grid-cols-5 gap-4">
+                  {s.tiles.map((tile) => (
+                    <CategoryTile key={tile.href} tile={tile} />
+                  ))}
+                </div>
+              </div>
+            </section>
+          );
+        }
+
+        productIndex += 1;
         const subs = s.subsections.filter((ss) => ss.products.length);
         const inner = (
           <section className="py-14">
@@ -68,7 +75,7 @@ export function HomeSections({ sections }: { sections: HomeSection[] }) {
           </section>
         );
         return (
-          <div key={i} className={i % 2 === 1 ? "bg-white" : ""}>
+          <div key={i} className={productIndex % 2 === 1 ? "bg-white" : ""}>
             {inner}
           </div>
         );

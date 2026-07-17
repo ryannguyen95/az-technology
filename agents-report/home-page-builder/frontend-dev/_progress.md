@@ -1,0 +1,13 @@
+# Frontend-dev progress — home-page-builder
+
+- 15:32 Đọc feature-spec.md + data-contract.md. Đọc `src/components/HomeSections.tsx`, `src/app/page.tsx`, `src/lib/types.ts`. Grep confirm `CategoryTilesSection`/`getCategoryTiles` chỉ dùng trong 2 file trên → an toàn xoá khỏi HomeSections.tsx.
+- 15:33 Bắt đầu sửa `HomeSections.tsx`: đổi sang switch theo `section.type`, gộp markup category-list vào, bỏ export `CategoryTilesSection` riêng (không còn ai import ngoài page.tsx sẽ sửa).
+- 15:36 Sửa xong `HomeSections.tsx`. Xử lý alternation nền: category-list không tính vào bộ đếm alternation (render không bg, giữ background trong suốt như bản `CategoryTilesSection` cũ); bộ đếm `productIndex` chỉ tăng cho section `product-list` → tái tạo đúng thứ tự nền cũ (SẢN PHẨM NỔI BẬT: trong suốt, GIẢI PHÁP DOANH NGHIỆP: trắng, DỊCH VỤ IT: trong suốt).
+- 15:37 Sửa `src/app/page.tsx`: bỏ import + gọi `<CategoryTilesSection />`, chỉ còn `Hero → HomeSections → WhyAZ → PartnerMarquee → CTAStrip`.
+- 15:38 Grep confirm không còn ai import `CategoryTilesSection`/`getCategoryTiles` (đã bỏ khỏi HomeSections.tsx; `getCategoryTiles` trong `src/lib/data` vẫn giữ nguyên theo data-contract, không đụng).
+- 15:39 `bun run typecheck` sạch (không lỗi).
+- 15:40 `bun run lint` → không chạy được do repo chưa có file cấu hình eslint (`.eslintrc*`/`eslint.config.*`) từ trước — `next lint` hỏi tương tác để tạo config lần đầu. Đây là tình trạng có sẵn của repo (kiểm bằng `find` không thấy file eslint nào), không liên quan tới thay đổi trong task này → không tự tạo config (ngoài phạm vi), ghi nhận trong frontend-notes.md.
+- 15:42 Dev server sẵn có ở `:3005` (DATA_SOURCE=strapi, Strapi `:1337` đang chạy). `curl http://localhost:3005` → HTTP 200, thấy đủ "Khám phá theo nhóm giải pháp", "SẢN PHẨM NỔI BẬT", "GIẢI PHÁP DOANH NGHIỆP", "Máy tính". Thứ tự h2 đúng: category-list trước, rồi 3 product-list theo đúng thứ tự CMS.
+- 15:45 CDP `:9222` MỞ SẴN → verify pixel qua Playwright (playwright-core từ bun cache, 1-tab marker `#azagent-fe`, không mở tab mới/không bringToFront). `getComputedStyle` các section: category-list bg trong suốt (10 tiles), SẢN PHẨM NỔI BẬT bg trong suốt, GIẢI PHÁP DOANH NGHIỆP bg trắng (255,255,255), DỊCH VỤ IT bg trong suốt — khớp đúng nhịp alternation của bản cũ. Screenshot full-page xem lại: layout y hệt bản cũ (lưới danh mục trên cùng, 3 hàng sản phẩm, WhyAZ/PartnerMarquee/CTA phía dưới không đổi).
+- 15:46 Không test bước "đổi thứ tự trong CMS" (nêu ở spec là không bắt buộc) — bỏ qua để tiết kiệm thời gian, không có rủi ro vì logic render đọc thẳng theo thứ tự mảng `sections` trả về từ `getHomeSections()`.
+- 15:47 Hoàn tất. Viết `frontend-notes.md` + báo cáo cuối.

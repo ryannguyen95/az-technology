@@ -544,16 +544,16 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiHomeSectionHomeSection extends Struct.CollectionTypeSchema {
-  collectionName: 'home_sections';
+export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
+  collectionName: 'home_page';
   info: {
-    description: "C\u00E1c kh\u1ED1i s\u1EA3n ph\u1EA9m tr\u00EAn trang ch\u1EE7. Ch\u1ECDn s\u1EA3n ph\u1EA9m tr\u1EF1c ti\u1EBFp, ho\u1EB7c chia th\u00E0nh nhi\u1EC1u m\u1EE5c con. Trang ch\u1EE7 hi\u1EC3n th\u1ECB 5 s\u1EA3n ph\u1EA9m \u0111\u1EA7u; b\u1EA5m 'Xem t\u1EA5t c\u1EA3' \u0111\u1EC3 xem h\u1EBFt.";
-    displayName: 'M\u1EE5c trang ch\u1EE7';
-    pluralName: 'home-sections';
-    singularName: 'home-section';
+    description: 'Page builder trang ch\u1EE7 \u2014 th\u00EAm/xo\u00E1/s\u1EAFp x\u1EBFp c\u00E1c kh\u1ED1i (danh s\u00E1ch s\u1EA3n ph\u1EA9m, l\u01B0\u1EDBi danh m\u1EE5c).';
+    displayName: 'Trang ch\u1EE7';
+    pluralName: 'home-pages';
+    singularName: 'home-page';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -562,18 +562,13 @@ export interface ApiHomeSectionHomeSection extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::home-section.home-section'
+      'api::home-page.home-page'
     > &
       Schema.Attribute.Private;
-    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    parentCategory: Schema.Attribute.Relation<
-      'oneToOne',
-      'api::parent-category.parent-category'
-    >;
-    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
-    subsections: Schema.Attribute.Component<'home.subsection', true>;
-    title: Schema.Attribute.String & Schema.Attribute.Required;
+    sections: Schema.Attribute.DynamicZone<
+      ['sections.product-list', 'sections.category-list']
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1266,7 +1261,7 @@ declare module '@strapi/strapi' {
       'api::banner.banner': ApiBannerBanner;
       'api::brand.brand': ApiBrandBrand;
       'api::category.category': ApiCategoryCategory;
-      'api::home-section.home-section': ApiHomeSectionHomeSection;
+      'api::home-page.home-page': ApiHomePageHomePage;
       'api::parent-category.parent-category': ApiParentCategoryParentCategory;
       'api::product.product': ApiProductProduct;
       'api::quote-request.quote-request': ApiQuoteRequestQuoteRequest;

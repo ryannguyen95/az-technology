@@ -137,9 +137,11 @@ export async function getMegaNav(): Promise<MegaItem[]> {
   return [...items, ...NAV_STATIC_TAIL];
 }
 
-// Configurable homepage sections. In strapi mode they're fully editor-driven
-// (order, titles, sub-sections, picked products). In seed mode we build a
-// sensible default. Product slugs are resolved to full entries here.
+// Configurable homepage sections (CMS page builder). In strapi mode they're fully
+// editor-driven (order, titles, section type, sub-sections, picked products/
+// categories — a Strapi dynamic zone on the `home-page` single-type). In seed
+// mode we build a sensible default. Slugs are resolved to full entries here so
+// both modes hand components the same CatalogEntry[]/CategoryTile[] shape.
 export async function getHomeSections(): Promise<HomeSection[]> {
   const all = await getAllEntries();
   const bySlug = new Map(all.map((e) => [e.slug, e]));
@@ -151,26 +153,39 @@ export async function getHomeSections(): Promise<HomeSection[]> {
     const moreHref = (slug?: string) =>
       slug && bySlug.has(slug) ? entryHref("category", slug) : undefined;
     const raw = await strapi.getHomeSections();
-    return raw.map((s) => ({
-      title: s.title,
-      products: pick(s.productSlugs),
-      moreHref: moreHref(s.moreParentSlug),
-      subsections: s.subsections.map((ss) => ({
-        title: ss.title,
-        products: pick(ss.productSlugs),
-        moreHref: moreHref(ss.moreParentSlug),
-      })),
-    }));
+    return raw.map((s): HomeSection => {
+      if (s.type === "category-list") {
+        return {
+          type: "category-list",
+          title: s.title,
+          tiles: pick(s.categorySlugs).map((c) => ({ label: c.title, icon: c.icon ?? "cpu", href: entryHref(c.kind, c.slug) })),
+        };
+      }
+      return {
+        type: "product-list",
+        title: s.title,
+        products: pick(s.productSlugs),
+        moreHref: moreHref(s.moreParentSlug),
+        subsections: s.subsections.map((ss) => ({
+          title: ss.title,
+          products: pick(ss.productSlugs),
+          moreHref: moreHref(ss.moreParentSlug),
+        })),
+      };
+    });
   }
 
-  // seed-mode default
+  // seed-mode default — reproduces the pre-page-builder homepage: a category
+  // tile grid ("Khám phá theo nhóm giải pháp") followed by the product-list rows.
   const byKind = (k: EntryKind, n?: number) => {
     const list = all.filter((e) => e.kind === k);
     return n ? list.slice(0, n) : list;
   };
   const catHref = (slug: string) => entryHref("category", slug);
   return [
+    { type: "category-list", title: "Khám phá theo nhóm giải pháp", tiles: categoryTiles },
     {
+      type: "product-list",
       title: "SẢN PHẨM NỔI BẬT",
       products: [],
       subsections: [
@@ -178,8 +193,8 @@ export async function getHomeSections(): Promise<HomeSection[]> {
         { title: "Phần cứng", products: byKind("product", 12), moreHref: catHref("phan-cung") },
       ],
     },
-    { title: "GIẢI PHÁP DOANH NGHIỆP", products: byKind("solution"), subsections: [], moreHref: catHref("giai-phap") },
-    { title: "DỊCH VỤ IT", products: byKind("service"), subsections: [], moreHref: catHref("dich-vu-it") },
+    { type: "product-list", title: "GIẢI PHÁP DOANH NGHIỆP", products: byKind("solution"), subsections: [], moreHref: catHref("giai-phap") },
+    { type: "product-list", title: "DỊCH VỤ IT", products: byKind("service"), subsections: [], moreHref: catHref("dich-vu-it") },
   ];
 }
 

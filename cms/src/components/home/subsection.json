@@ -6,7 +6,7 @@
     "title": { "type": "string", "required": true },
     "products": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::product.product"
     },
     "parentCategory": {

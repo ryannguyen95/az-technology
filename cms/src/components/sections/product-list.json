@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_sections_product_lists",
+  "info": {
+    "displayName": "Khối danh sách sản phẩm",
+    "icon": "bulletList",
+    "description": "Một khối trang chủ hiển thị danh sách sản phẩm, có thể chia thành nhiều mục con."
+  },
+  "options": {},
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product"
+    },
+    "subsections": {
+      "type": "component",
+      "repeatable": true,
+      "component": "home.subsection"
+    },
+    "parentCategory": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::parent-category.parent-category"
+    }
+  }
+}

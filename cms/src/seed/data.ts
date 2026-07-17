@@ -3267,6 +3267,28 @@ export const HOME_SECTIONS: SeedHomeSection[] = [
     ]
   }
 ];
+
+// Default "category-list" section for the home page — the tile grid that used to be
+// hardcoded as CategoryTilesSection. Slugs match the previous getCategoryTiles()
+// default (categories under phan-cung/phan-mem ordered by `order`, first 10).
+export interface SeedHomeCategoryList { title: string; order: number; categorySlugs: string[]; }
+export const HOME_CATEGORY_LIST: SeedHomeCategoryList = {
+  title: "Khám phá theo nhóm giải pháp",
+  order: 0,
+  categorySlugs: [
+    "may-tinh",
+    "man-hinh-hien-thi",
+    "may-in-scan",
+    "hop-truc-tuyen",
+    "thiet-bi-mang",
+    "luu-tru",
+    "bao-mat",
+    "data-center",
+    "microsoft",
+    "adobe",
+  ],
+};
+
 export const HEROES = [
   {
     "title": "Hạ tầng số vững chắc",
