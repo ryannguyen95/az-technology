@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Self-contained server bundle for lean PM2 deploys (no npm install on the
+  // server; `node .next/standalone/server.js` runs with a minimal traced set).
+  output: "standalone",
   images: {
     // Strapi/CDN media hosts are allowlisted here when wired (review T9).
     remotePatterns: [
