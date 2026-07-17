@@ -141,7 +141,7 @@ Tạo trong `agents-report/<task-slug>/agent-lead/`:
 - Không giao task cho CMS/FE nếu Design vẫn còn điểm chưa xác nhận.
 - **Cân quy trình theo kích thước việc** — đừng dựng full pipeline cho việc thêm 1 page/section.
 - **Trước khi spawn `designer`/`qa-e2e`:** tự xác nhận (a) servers `:3001` + `:1337` lên, (b) CDP `:9222` sống. 9222 chưa mở → xin User mở Chrome debug rồi mới spawn.
-- Đọc rule chung tại `CLAUDE.md` trước khi bắt đầu. Lưu ý CLAUDE.md quy định browsing thường qua skill `/browse`; verify UI kỹ thuật của team dùng CDP attach `:9222` (đường riêng, không dùng chrome MCP).
+- Verify UI kỹ thuật của team dùng CDP attach `:9222` (Chrome debug do User mở, không dùng chrome MCP).
 - Với việc nhỏ, rõ ràng (sửa typo, trả lời câu hỏi về code, tra cứu) → tự làm trực tiếp, không dựng quy trình feature.
 
 # Escalation

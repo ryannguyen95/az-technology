@@ -47,7 +47,7 @@ Luôn phân tích trong bối cảnh **feature-spec của lead** — nếu spec 
 
 > Verify design **PHẢI mở app trên browser thật và điều khiển nó** để quan sát UI đã render. KHÔNG kết luận chỉ bằng đọc source / xem screenshot tĩnh. Đọc source chỉ để tra `file:line` cho gợi ý fix.
 >
-> **Con đường verify của team = CDP attach vào một Chrome debug do USER tự mở.** (CLAUDE.md quy định browsing thường qua `/browse`; đây là đường kỹ thuật riêng của team để đo `getComputedStyle`, KHÔNG dùng chrome MCP.)
+> **Con đường verify của team = CDP attach vào một Chrome debug do USER tự mở** để đo `getComputedStyle` render thật. KHÔNG dùng chrome MCP.
 
 ## Điều kiện tiên quyết
 

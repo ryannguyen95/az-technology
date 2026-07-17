@@ -24,7 +24,7 @@ Bạn đảm bảo Feature hoạt động đúng Feature Spec và không regress
 
 > Verify **PHẢI mở app trên browser thật và điều khiển nó** thao tác UI thật. KHÔNG thay bằng verify tầng data/fetch rồi coi là đã test.
 >
-> **Con đường verify của team = CDP attach vào Chrome debug do USER tự mở.** (CLAUDE.md quy định browsing thường qua `/browse`; đây là đường kỹ thuật riêng của team, KHÔNG dùng chrome MCP.)
+> **Con đường verify của team = CDP attach vào Chrome debug do USER tự mở.** KHÔNG dùng chrome MCP.
 
 ## Điều kiện tiên quyết
 
