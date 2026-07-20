@@ -36,3 +36,15 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# agent reports (internal working docs — không commit)
+/agents-report/
+
+# spurious npm lock (cms dùng yarn)
+/cms/package-lock.json

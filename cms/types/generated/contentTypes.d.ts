@@ -522,7 +522,72 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
           preset: 'defaultHtml';
         }
       >;
-    icon: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'laptop',
+        'monitor',
+        'cpu',
+        'server',
+        'printer',
+        'camera',
+        'battery',
+        'phone',
+        'headset',
+        'truck',
+        'windows',
+        'm365',
+        'cloud',
+        'code',
+        'layers',
+        'chart',
+        'globe',
+        'lock',
+        'shield',
+        'backup',
+        'refresh',
+        'wrench',
+        'cap',
+        'building',
+        'receipt',
+        'design',
+        'microsoft',
+        'adobe',
+        'autodesk',
+        'zoom',
+        'kaspersky',
+        'eset',
+        'veeam',
+        'prtg',
+        'search',
+        'menu',
+        'close',
+        'x',
+        'check',
+        'plus',
+        'minus',
+        'mail',
+        'chat',
+        'send',
+        'quote',
+        'star',
+        'badge',
+        'sparkles',
+        'rocket',
+        'play',
+        'users',
+        'location',
+        'map',
+        'clock',
+        'zalo',
+        'video',
+        'arrow',
+        'arrowRight',
+        'arrowUp',
+        'chevronDown',
+        'chevronLeft',
+        'chevronRight',
+      ]
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -591,7 +656,72 @@ export interface ApiParentCategoryParentCategory
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    icon: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'laptop',
+        'monitor',
+        'cpu',
+        'server',
+        'printer',
+        'camera',
+        'battery',
+        'phone',
+        'headset',
+        'truck',
+        'windows',
+        'm365',
+        'cloud',
+        'code',
+        'layers',
+        'chart',
+        'globe',
+        'lock',
+        'shield',
+        'backup',
+        'refresh',
+        'wrench',
+        'cap',
+        'building',
+        'receipt',
+        'design',
+        'microsoft',
+        'adobe',
+        'autodesk',
+        'zoom',
+        'kaspersky',
+        'eset',
+        'veeam',
+        'prtg',
+        'search',
+        'menu',
+        'close',
+        'x',
+        'check',
+        'plus',
+        'minus',
+        'mail',
+        'chat',
+        'send',
+        'quote',
+        'star',
+        'badge',
+        'sparkles',
+        'rocket',
+        'play',
+        'users',
+        'location',
+        'map',
+        'clock',
+        'zalo',
+        'video',
+        'arrow',
+        'arrowRight',
+        'arrowUp',
+        'chevronDown',
+        'chevronLeft',
+        'chevronRight',
+      ]
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -638,7 +768,72 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     gallery: Schema.Attribute.Media<'images', true>;
     headline: Schema.Attribute.Text;
     highlights: Schema.Attribute.Component<'blocks.highlight', true>;
-    icon: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'laptop',
+        'monitor',
+        'cpu',
+        'server',
+        'printer',
+        'camera',
+        'battery',
+        'phone',
+        'headset',
+        'truck',
+        'windows',
+        'm365',
+        'cloud',
+        'code',
+        'layers',
+        'chart',
+        'globe',
+        'lock',
+        'shield',
+        'backup',
+        'refresh',
+        'wrench',
+        'cap',
+        'building',
+        'receipt',
+        'design',
+        'microsoft',
+        'adobe',
+        'autodesk',
+        'zoom',
+        'kaspersky',
+        'eset',
+        'veeam',
+        'prtg',
+        'search',
+        'menu',
+        'close',
+        'x',
+        'check',
+        'plus',
+        'minus',
+        'mail',
+        'chat',
+        'send',
+        'quote',
+        'star',
+        'badge',
+        'sparkles',
+        'rocket',
+        'play',
+        'users',
+        'location',
+        'map',
+        'clock',
+        'zalo',
+        'video',
+        'arrow',
+        'arrowRight',
+        'arrowUp',
+        'chevronDown',
+        'chevronLeft',
+        'chevronRight',
+      ]
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -736,6 +931,21 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
       'api::site-setting.site-setting'
     > &
       Schema.Attribute.Private;
+    logo: Schema.Attribute.Media<'images'>;
+    logoAspectRatio: Schema.Attribute.Enumeration<
+      [
+        'Vu\u00F4ng 1:1',
+        'T\u1EC9 l\u1EC7 3:2',
+        'T\u1EC9 l\u1EC7 2:1',
+        'T\u1EC9 l\u1EC7 3:1',
+        'T\u1EC9 l\u1EC7 4:1',
+        'R\u1ED9ng 16:9',
+        'Tu\u1EF3 ch\u1EC9nh',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'T\u1EC9 l\u1EC7 4:1'>;
+    logoAspectRatioCustom: Schema.Attribute.String;
+    logoDark: Schema.Attribute.Media<'images'>;
     mapUrl: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     shortName: Schema.Attribute.String;

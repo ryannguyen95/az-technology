@@ -89,6 +89,72 @@ async function setVietnameseLabels(strapi: Core.Strapi) {
   strapi.log.info("[seed] vietnamese field labels ensured");
 }
 
+// Helper text (ghi chú kích thước ảnh, hướng dẫn icon…) hiển thị dưới field trong
+// Content Manager. Strapi KHÔNG lấy từ schema.json `description` — phải set vào cấu hình
+// content-manager (metadatas.<field>.edit.description), y như cách set label ở trên.
+// Field ảnh mới → thêm ghi chú kích thước ở đây (theo rynex-process/roles/backend-dev.md).
+const CT_DESCRIPTIONS: Record<string, Record<string, string>> = {
+  "api::parent-category.parent-category": {
+    icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
+  },
+  "api::category.category": {
+    icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
+  },
+  "api::product.product": {
+    icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
+    coverImage: "Kích thước đề xuất 1000×1000 (vuông), PNG/WebP nền trong suốt hoặc trắng, ≤300KB. Ảnh giữ nguyên không bị cắt, hiển thị trên nền trắng.",
+    gallery: "Cùng chuẩn ảnh cover: 1000×1000 (vuông), PNG/WebP nền trong suốt hoặc trắng, ≤300KB.",
+  },
+  "api::banner.banner": {
+    image: "Kích thước đề xuất 1920×640 (tỉ lệ 3:1), JPG/WebP, ≤400KB. Ảnh sẽ bị cắt để lấp đầy khung — đặt nội dung/chữ quan trọng vào giữa.",
+  },
+  "api::site-setting.site-setting": {
+    logo: "Logo nền sáng (header). PNG/WebP nền trong suốt, cao ≥80px, KHÔNG dùng SVG.",
+    logoDark: "Logo nền tối (footer, menu mobile). PNG/WebP nền trong suốt, cao ≥80px. Bỏ trống sẽ dùng chung logo nền sáng.",
+  },
+};
+const COMPONENT_DESCRIPTIONS: Record<string, Record<string, string>> = {
+  "seo.meta": {
+    ogImage: "Kích thước 1200×630 (tỉ lệ 1.91:1) — ảnh hiển thị khi chia sẻ link (Zalo/Facebook/LinkedIn). Để logo + tên ở giữa, tránh chữ nhỏ. ≤300KB.",
+  },
+};
+
+async function setFieldDescriptions(strapi: Core.Strapi) {
+  const ctService: any = strapi.plugin("content-manager").service("content-types");
+  for (const [uid, fields] of Object.entries(CT_DESCRIPTIONS)) {
+    try {
+      const ct = strapi.contentType(uid as any);
+      const cfg = await ctService.findConfiguration(ct);
+      cfg.metadatas = cfg.metadatas || {};
+      for (const [field, description] of Object.entries(fields)) {
+        const meta = cfg.metadatas[field];
+        if (!meta) continue;
+        meta.edit = { ...(meta.edit || {}), description };
+      }
+      await ctService.updateConfiguration(ct, cfg);
+    } catch (err) {
+      strapi.log.warn(`[seed] field-descriptions skipped for ${uid}: ${(err as Error).message}`);
+    }
+  }
+  const compService: any = strapi.plugin("content-manager").service("components");
+  for (const [uid, fields] of Object.entries(COMPONENT_DESCRIPTIONS)) {
+    try {
+      const comp = (strapi as any).components[uid];
+      const cfg = await compService.findConfiguration(comp);
+      cfg.metadatas = cfg.metadatas || {};
+      for (const [field, description] of Object.entries(fields)) {
+        const meta = cfg.metadatas[field];
+        if (!meta) continue;
+        meta.edit = { ...(meta.edit || {}), description };
+      }
+      await compService.updateConfiguration(comp, cfg);
+    } catch (err) {
+      strapi.log.warn(`[seed] field-descriptions skipped for component ${uid}: ${(err as Error).message}`);
+    }
+  }
+  strapi.log.info("[seed] field descriptions ensured");
+}
+
 // Public read: published only. quote-request is create-only (holds PII).
 const PUBLIC_FIND = [
   "api::parent-category.parent-category",
@@ -254,6 +320,7 @@ export default {
     try {
       await setPublicPermissions(strapi);
       await setVietnameseLabels(strapi);
+      await setFieldDescriptions(strapi);
       await ensureSiteSetting(strapi);
       const existing = await strapi.db.query("api::product.product").count();
       if (process.env.SEED === "force" || (existing === 0 && process.env.SEED !== "false")) {

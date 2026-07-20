@@ -11,7 +11,7 @@
       "name": "strapi",
       "runtimeExecutable": "/Users/nguyendinhphuc/.nvm/versions/node/v22.20.0/bin/node",
       "runtimeArgs": ["node_modules/@strapi/strapi/bin/strapi.js", "develop"],
-      "cwd": "/Users/nguyendinhphuc/Documents/OwnApp/az-technology/cms",
+      "cwd": "/Users/nguyendinhphuc/Documents/OwnApp/projects/az-technology/cms",
       "port": 1337
     }
   ]

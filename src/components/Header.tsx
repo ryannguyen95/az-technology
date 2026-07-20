@@ -74,6 +74,7 @@ function MegaPanel({ item, onClose }: { item: MegaItem; onClose: () => void }) {
 function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void; nav: MegaItem[] }) {
   const [exp, setExp] = useState<string | null>(null);
   const { openQuote } = useQuote();
+  const settings = useSettings();
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {
@@ -85,7 +86,7 @@ function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void;
       <div className={`absolute inset-0 bg-navy-deep/50 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
       <div className={`absolute top-0 left-0 h-full w-[86%] max-w-sm bg-white shadow-pop transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="az-grad-navy text-white px-4 py-4 flex items-center justify-between">
-          <AZLogo light />
+          <AZLogo light logo={settings.logo} logoDark={settings.logoDark} logoRatio={settings.logoRatio} />
           <button onClick={onClose} aria-label="Đóng" className="w-9 h-9 grid place-items-center rounded-full bg-white/15">
             <Icon name="x" className="w-5 h-5" />
           </button>
@@ -182,14 +183,15 @@ export function Header({ nav }: { nav: MegaItem[] }) {
       {/* Main bar */}
       <div className="bg-white/95 backdrop-blur border-b border-slate-200 shadow-[0_2px_12px_-6px_rgba(0,45,90,.2)]" onMouseLeave={leave}>
         <div className="max-w-site mx-auto px-4">
-          <div className="flex items-center gap-4 h-16">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 h-16">
             <button onClick={() => setMobile(true)} aria-label="Mở menu" className="lg:hidden w-10 h-10 -ml-2 grid place-items-center rounded-lg text-navy hover:bg-slate-100">
               <Icon name="menu" className="w-6 h-6" />
             </button>
-            <AZLogo />
+            <AZLogo logo={settings.logo} logoDark={settings.logoDark} logoRatio={settings.logoRatio} priority />
             <SearchBox className="hidden xl:block flex-1 max-w-md" />
             <div className="flex-1 hidden xl:block" />
-            <Button variant="primary" size="sm" className="ml-auto lg:ml-0" icon="send" onClick={() => openQuote({ mode: "full" })}>
+            <Button variant="primary" size="sm" className="ml-auto lg:ml-0 px-2.5 sm:px-3.5" onClick={() => openQuote({ mode: "full" })}>
+              <Icon name="send" className="hidden sm:inline w-[18px] h-[18px]" />
               <span className="hidden sm:inline">NHẬN BÁO GIÁ</span>
               <span className="sm:hidden">Báo giá</span>
             </Button>

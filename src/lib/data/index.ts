@@ -17,7 +17,15 @@ const USE_STRAPI = process.env.DATA_SOURCE === "strapi";
 export { settings, nav, heroSlides, categoryTiles, whyAZ, footerLinks, brands };
 
 export async function getAllEntries(): Promise<CatalogEntry[]> {
-  return USE_STRAPI ? strapi.getAllEntries() : seedEntries;
+  const all = USE_STRAPI ? await strapi.getAllEntries() : seedEntries;
+  // Điền tên nhóm cha (parentTitle) cho mỗi entry để card hiển thị nhóm THẬT
+  // (Phần mềm/Phần cứng/Dịch vụ IT/Giải pháp) thay vì nhãn hardcode theo kind.
+  const titleBySlug = new Map(all.map((e) => [e.slug, e.title]));
+  return all.map((e) =>
+    e.parentSlug && titleBySlug.has(e.parentSlug)
+      ? { ...e, parentTitle: titleBySlug.get(e.parentSlug) }
+      : e,
+  );
 }
 
 export async function getEntriesByKind(kind: EntryKind): Promise<CatalogEntry[]> {

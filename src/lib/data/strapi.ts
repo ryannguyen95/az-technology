@@ -181,12 +181,27 @@ export async function getHomeSections(): Promise<RawHomeSection[]> {
   });
 }
 
+// Strapi enum values can't start with a digit ("Invalid enumeration value" —
+// requires an alphabetical char before the first number), so preset labels
+// are Vietnamese-readable strings like "Tỉ lệ 4:1" / "Vuông 1:1" / "Rộng 16:9"
+// (and "Tuỳ chỉnh" for custom). Extract the trailing "W:H" via regex to get
+// the real ratio string the data contract (and FE parseRatio) expects.
+const isValidRatio = (r?: string) => !!r && /^\d+(\.\d+)?:\d+(\.\d+)?$/.test(r.trim());
+
 export async function getSettings(): Promise<Partial<SiteSettings>> {
-  const json = await sFetch(`/site-setting`, ["site-setting"]);
+  const json = await sFetch(`/site-setting?populate[logo][fields][0]=url&populate[logoDark][fields][0]=url`, ["site-setting"]);
   const d = json.data ?? {};
+  const ratioMatch = typeof d.logoAspectRatio === "string" ? d.logoAspectRatio.match(/\d+:\d+/) : null;
+  const logoRatio =
+    d.logoAspectRatio === "Tuỳ chỉnh"
+      ? (isValidRatio(d.logoAspectRatioCustom) ? d.logoAspectRatioCustom.trim() : "4:1")
+      : (ratioMatch ? ratioMatch[0] : "4:1");
   return {
     company: d.company, shortName: d.shortName, slogan: d.slogan, hotline: d.hotline,
     email: d.email, address: d.address, zaloUrl: d.zaloUrl, mapUrl: d.mapUrl,
+    logo: d.logo?.url ? absolute(d.logo.url) : null,
+    logoDark: d.logoDark?.url ? absolute(d.logoDark.url) : null,
+    logoRatio,
   };
 }
 

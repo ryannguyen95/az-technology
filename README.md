@@ -82,6 +82,26 @@ On first boot the bootstrap (`cms/src/index.ts`):
 
 Set `SEED=false` to skip seeding. First run prompts you to create an admin user.
 
+## Local dev accounts (test credentials)
+
+> ⚠️ **LOCAL DEV ONLY** — SQLite (`cms/.tmp/data.db`). Do NOT reuse these in staging/prod.
+> Documented here so we stop forgetting. Update this table whenever an account changes.
+
+| System | URL | Email | Password |
+| --- | --- | --- | --- |
+| Strapi admin | http://localhost:1337/admin | `devphuc@gmail.com` | `AzTech@2026` |
+
+Reset the Strapi admin password (needs Node 22 — native `better-sqlite3` is built for it):
+
+```bash
+cd cms
+nvm use 22
+node_modules/.bin/strapi admin:reset-user-password --email "devphuc@gmail.com" --password "<new-password>"
+```
+
+Then update the table above.
+
+
 ## Content model (Strapi)
 
 One **CatalogEntry** type with `kind` (category | solution | service | software |

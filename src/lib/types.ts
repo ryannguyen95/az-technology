@@ -17,6 +17,7 @@ export interface CatalogEntry {
   title: string;
   headline?: string; // long display title for the detail page H1 (falls back to title)
   parentSlug?: string; // hierarchy: group -> sub-entry
+  parentTitle?: string; // tên hiển thị của nhóm cha (điền trong getAllEntries) — cho eyebrow card
   order?: number;
   icon?: string;
   tone?: Tone;
@@ -107,6 +108,9 @@ export interface SiteSettings {
   address: string;
   zaloUrl: string;
   mapUrl: string;
+  logo?: string | null; // absolute URL of the light-background logo (dark text), null if not uploaded
+  logoDark?: string | null; // absolute URL of the dark-background logo (white text); falls back to `logo`
+  logoRatio: string; // resolved display ratio ("W:H"), default "4:1"
 }
 
 export interface NavColumn {

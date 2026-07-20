@@ -11,7 +11,7 @@ export async function Footer() {
       <div className="max-w-site mx-auto px-4 py-14">
         <div className="grid grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr] gap-8">
           <div className="col-span-2 lg:col-span-1">
-            <AZLogo light />
+            <AZLogo light logo={settings.logo} logoDark={settings.logoDark} logoRatio={settings.logoRatio} />
             <p className="text-[13px] mt-4 leading-relaxed text-white/65 max-w-xs">{settings.address}</p>
             <div className="mt-4 space-y-2 text-[13.5px]">
               <a href={`tel:${tel}`} className="flex items-center gap-2 hover:text-cyan-300 transition-colors">

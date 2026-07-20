@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { CardProduct } from "@/lib/card";
 import type { CategoryTile as CategoryTileType, Tone } from "@/lib/types";
@@ -5,9 +6,70 @@ import { Icon } from "./Icon";
 import { ProductCard } from "./ProductCard";
 import { TONES } from "./ProductImage";
 
-export function AZLogo({ light = false, className = "" }: { light?: boolean; className?: string }) {
+// Fixed lockup height (px) — matches the icon box (`w-11 h-11`) of the fallback
+// lockup below, so swapping in a CMS logo never shifts header/footer layout.
+const LOGO_HEIGHT = 44;
+
+/** Parses a `"W:H"` (or bare number) ratio string into a numeric width/height ratio. Falls back to 4:1. */
+function parseLogoRatio(ratio?: string): number {
+  if (ratio) {
+    const [wRaw, hRaw] = ratio.split(":");
+    const w = parseFloat(wRaw);
+    const h = hRaw !== undefined ? parseFloat(hRaw) : 1;
+    if (Number.isFinite(w) && w > 0 && Number.isFinite(h) && h > 0) return w / h;
+  }
+  return 4;
+}
+
+export function AZLogo({
+  light = false,
+  className = "",
+  logo,
+  logoDark,
+  logoRatio,
+  company = "AZ Technology",
+  priority = false,
+}: {
+  light?: boolean;
+  className?: string;
+  logo?: string | null;
+  logoDark?: string | null;
+  logoRatio?: string;
+  company?: string;
+  // Only the above-the-fold desktop header logo should preload. Off-canvas
+  // (mobile drawer) and below-the-fold (footer) instances must lazy-load so
+  // they don't compete with the real LCP candidate (hero) for preload bandwidth.
+  priority?: boolean;
+}) {
+  // `light` means the logo sits on a DARK background (white text needed) → prefer
+  // the dark-bg asset; on a light background prefer the default one. Either falls
+  // back to the other so a single uploaded image still works everywhere.
+  const src = light ? (logoDark ?? logo) : (logo ?? logoDark);
+  if (src) {
+    const width = Math.round(LOGO_HEIGHT * parseLogoRatio(logoRatio));
+    return (
+      <Link href="/" className={`flex items-center shrink-0 group ${className}`} aria-label={`${company} - Trang chủ`}>
+        <Image
+          src={src}
+          alt={company}
+          width={width}
+          height={LOGO_HEIGHT}
+          priority={priority}
+          className="object-contain"
+          // Pin both dimensions explicitly (not `w-auto`): CSS replaced-element
+          // sizing falls back to the *loaded* image's own natural aspect ratio
+          // when either dimension is `auto`, which would silently ignore the
+          // CMS-configured `logoRatio` whenever the uploaded file's real pixel
+          // ratio differs from it. Pinning width+height forces the intended
+          // box so `object-contain` can letterbox the real image inside it.
+          style={{ width, height: LOGO_HEIGHT }}
+        />
+      </Link>
+    );
+  }
+
   return (
-    <Link href="/" className={`flex items-center gap-2.5 group ${className}`} aria-label="AZ Technology - Trang chủ">
+    <Link href="/" className={`flex items-center gap-2.5 group ${className}`} aria-label={`${company} - Trang chủ`}>
       <span className="relative grid place-items-center w-11 h-11 rounded-xl az-grad shadow-[0_8px_18px_-8px_rgba(0,86,179,.8)] overflow-hidden">
         <span className="absolute inset-0 az-dots opacity-40" />
         <span className="relative font-extrabold text-white text-lg tracking-tight">AZ</span>
