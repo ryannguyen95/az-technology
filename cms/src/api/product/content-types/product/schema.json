@@ -18,7 +18,10 @@
       "target": "api::category.category"
     },
     "order": { "type": "integer", "default": 0 },
-    "icon": { "type": "string" },
+    "icon": {
+      "type": "enumeration",
+      "enum": ["laptop", "monitor", "cpu", "server", "printer", "camera", "battery", "phone", "headset", "truck", "windows", "m365", "cloud", "code", "layers", "chart", "globe", "lock", "shield", "backup", "refresh", "wrench", "cap", "building", "receipt", "design", "microsoft", "adobe", "autodesk", "zoom", "kaspersky", "eset", "veeam", "prtg", "search", "menu", "close", "x", "check", "plus", "minus", "mail", "chat", "send", "quote", "star", "badge", "sparkles", "rocket", "play", "users", "location", "map", "clock", "zalo", "video", "arrow", "arrowRight", "arrowUp", "chevronDown", "chevronLeft", "chevronRight"]
+    },
     "tone": { "type": "enumeration", "enum": ["blue", "cyan", "green", "navy", "red"], "default": "blue" },
     "badge": { "type": "string" },
     "summary": {

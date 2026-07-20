@@ -17,6 +17,7 @@ export interface CatalogEntry {
   title: string;
   headline?: string; // long display title for the detail page H1 (falls back to title)
   parentSlug?: string; // hierarchy: group -> sub-entry
+  parentTitle?: string; // tên hiển thị của nhóm cha (điền trong getAllEntries) — cho eyebrow card
   order?: number;
   icon?: string;
   tone?: Tone;
@@ -68,19 +69,35 @@ export interface CategoryTile {
   href: string;
 }
 
-// Configurable homepage sections (CMS-driven). Each section / sub-section is one
-// ordered product list; the homepage shows the first 5 and reveals the rest inline.
+// Configurable homepage sections (CMS-driven page builder — Strapi dynamic zone
+// `home-page.sections`). Editor adds/removes/reorders/titles sections; array
+// order = dynamic-zone order (drag-and-drop in the admin).
 export interface HomeSubsection {
   title: string;
   products: CatalogEntry[];
   moreHref?: string; // "Xem thêm" links to a chosen parent-category page
 }
-export interface HomeSection {
+
+// A product-list section is one ordered product list (or split into sub-sections);
+// the homepage shows the first 5 and reveals the rest inline.
+export interface HomeProductListSection {
+  type: "product-list";
   title: string;
+  moreHref?: string; // "Xem thêm" links to a chosen parent-category page, from parentCategory
   products: CatalogEntry[];
   subsections: HomeSubsection[];
-  moreHref?: string; // "Xem thêm" links to a chosen parent-category page
 }
+
+// A category-list section is a grid of category tiles (label/icon/href resolved
+// from the linked categories) — replaces the old hardcoded "Khám phá theo nhóm
+// giải pháp" block.
+export interface HomeCategoryListSection {
+  type: "category-list";
+  title: string;
+  tiles: CategoryTile[];
+}
+
+export type HomeSection = HomeProductListSection | HomeCategoryListSection;
 
 export interface SiteSettings {
   company: string;
@@ -91,6 +108,9 @@ export interface SiteSettings {
   address: string;
   zaloUrl: string;
   mapUrl: string;
+  logo?: string | null; // absolute URL of the light-background logo (dark text), null if not uploaded
+  logoDark?: string | null; // absolute URL of the dark-background logo (white text); falls back to `logo`
+  logoRatio: string; // resolved display ratio ("W:H"), default "4:1"
 }
 
 export interface NavColumn {

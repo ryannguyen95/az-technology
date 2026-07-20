@@ -11,6 +11,28 @@
     "email": { "type": "email" },
     "address": { "type": "text" },
     "zaloUrl": { "type": "string" },
-    "mapUrl": { "type": "string" }
+    "mapUrl": { "type": "string" },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"],
+      "description": "Logo cho NỀN SÁNG (header trắng) — chữ tối/navy. Ảnh PNG/WebP nền trong suốt, cao ≥ 80px (KHÔNG dùng SVG)."
+    },
+    "logoDark": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": ["images"],
+      "description": "Logo cho NỀN TỐI (footer, menu mobile) — chữ trắng. Ảnh PNG/WebP nền trong suốt, cao ≥ 80px (KHÔNG dùng SVG). Bỏ trống sẽ dùng chung logo nền sáng."
+    },
+    "logoAspectRatio": {
+      "type": "enumeration",
+      "enum": ["Vuông 1:1", "Tỉ lệ 3:2", "Tỉ lệ 2:1", "Tỉ lệ 3:1", "Tỉ lệ 4:1", "Rộng 16:9", "Tuỳ chỉnh"],
+      "default": "Tỉ lệ 4:1",
+      "description": "Chọn tỉ lệ ngang:dọc của logo; chọn Tuỳ chỉnh để tự nhập."
+    },
+    "logoAspectRatioCustom": {
+      "type": "string",
+      "description": "Chỉ dùng khi chọn Custom, dạng W:H, vd 5:2."
+    }
   }
 }

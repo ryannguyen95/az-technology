@@ -1,5 +1,5 @@
 import type { Core } from "@strapi/strapi";
-import { BRANDS, CATEGORIES, HEROES, HOME_SECTIONS, PARENT_CATEGORIES, PRODUCTS, SETTINGS, slugify } from "./seed/data";
+import { BRANDS, CATEGORIES, HEROES, HOME_CATEGORY_LIST, HOME_SECTIONS, PARENT_CATEGORIES, PRODUCTS, SETTINGS, slugify } from "./seed/data";
 
 // Vietnamese labels for the admin Content Manager. Strapi has no schema-level
 // label, so we persist them into the content-manager configuration. Best-effort.
@@ -32,15 +32,21 @@ const VI_LABELS: Record<string, Record<string, string>> = {
     company: "Tên công ty", shortName: "Tên rút gọn", slogan: "Khẩu hiệu", hotline: "Hotline",
     email: "Email", address: "Địa chỉ", zaloUrl: "Link Zalo", mapUrl: "Link bản đồ",
   },
-  "api::home-section.home-section": {
-    title: "Tiêu đề mục", order: "Thứ tự", products: "Sản phẩm",
-    parentCategory: "Danh mục cha (nút Xem thêm)", subsections: "Mục con",
+  "api::home-page.home-page": {
+    sections: "Các khối trang chủ",
   },
 };
 const COMPONENT_LABELS: Record<string, Record<string, string>> = {
   "home.subsection": {
     title: "Tiêu đề mục con", products: "Sản phẩm",
     parentCategory: "Danh mục cha (nút Xem thêm)",
+  },
+  "sections.product-list": {
+    title: "Tiêu đề khối", products: "Sản phẩm",
+    subsections: "Mục con", parentCategory: "Danh mục cha (nút Xem thêm)",
+  },
+  "sections.category-list": {
+    title: "Tiêu đề khối", categories: "Danh mục",
   },
 };
 
@@ -83,6 +89,72 @@ async function setVietnameseLabels(strapi: Core.Strapi) {
   strapi.log.info("[seed] vietnamese field labels ensured");
 }
 
+// Helper text (ghi chú kích thước ảnh, hướng dẫn icon…) hiển thị dưới field trong
+// Content Manager. Strapi KHÔNG lấy từ schema.json `description` — phải set vào cấu hình
+// content-manager (metadatas.<field>.edit.description), y như cách set label ở trên.
+// Field ảnh mới → thêm ghi chú kích thước ở đây (theo rynex-process/roles/backend-dev.md).
+const CT_DESCRIPTIONS: Record<string, Record<string, string>> = {
+  "api::parent-category.parent-category": {
+    icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
+  },
+  "api::category.category": {
+    icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
+  },
+  "api::product.product": {
+    icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
+    coverImage: "Kích thước đề xuất 1000×1000 (vuông), PNG/WebP nền trong suốt hoặc trắng, ≤300KB. Ảnh giữ nguyên không bị cắt, hiển thị trên nền trắng.",
+    gallery: "Cùng chuẩn ảnh cover: 1000×1000 (vuông), PNG/WebP nền trong suốt hoặc trắng, ≤300KB.",
+  },
+  "api::banner.banner": {
+    image: "Kích thước đề xuất 1920×640 (tỉ lệ 3:1), JPG/WebP, ≤400KB. Ảnh sẽ bị cắt để lấp đầy khung — đặt nội dung/chữ quan trọng vào giữa.",
+  },
+  "api::site-setting.site-setting": {
+    logo: "Logo nền sáng (header). PNG/WebP nền trong suốt, cao ≥80px, KHÔNG dùng SVG.",
+    logoDark: "Logo nền tối (footer, menu mobile). PNG/WebP nền trong suốt, cao ≥80px. Bỏ trống sẽ dùng chung logo nền sáng.",
+  },
+};
+const COMPONENT_DESCRIPTIONS: Record<string, Record<string, string>> = {
+  "seo.meta": {
+    ogImage: "Kích thước 1200×630 (tỉ lệ 1.91:1) — ảnh hiển thị khi chia sẻ link (Zalo/Facebook/LinkedIn). Để logo + tên ở giữa, tránh chữ nhỏ. ≤300KB.",
+  },
+};
+
+async function setFieldDescriptions(strapi: Core.Strapi) {
+  const ctService: any = strapi.plugin("content-manager").service("content-types");
+  for (const [uid, fields] of Object.entries(CT_DESCRIPTIONS)) {
+    try {
+      const ct = strapi.contentType(uid as any);
+      const cfg = await ctService.findConfiguration(ct);
+      cfg.metadatas = cfg.metadatas || {};
+      for (const [field, description] of Object.entries(fields)) {
+        const meta = cfg.metadatas[field];
+        if (!meta) continue;
+        meta.edit = { ...(meta.edit || {}), description };
+      }
+      await ctService.updateConfiguration(ct, cfg);
+    } catch (err) {
+      strapi.log.warn(`[seed] field-descriptions skipped for ${uid}: ${(err as Error).message}`);
+    }
+  }
+  const compService: any = strapi.plugin("content-manager").service("components");
+  for (const [uid, fields] of Object.entries(COMPONENT_DESCRIPTIONS)) {
+    try {
+      const comp = (strapi as any).components[uid];
+      const cfg = await compService.findConfiguration(comp);
+      cfg.metadatas = cfg.metadatas || {};
+      for (const [field, description] of Object.entries(fields)) {
+        const meta = cfg.metadatas[field];
+        if (!meta) continue;
+        meta.edit = { ...(meta.edit || {}), description };
+      }
+      await compService.updateConfiguration(comp, cfg);
+    } catch (err) {
+      strapi.log.warn(`[seed] field-descriptions skipped for component ${uid}: ${(err as Error).message}`);
+    }
+  }
+  strapi.log.info("[seed] field descriptions ensured");
+}
+
 // Public read: published only. quote-request is create-only (holds PII).
 const PUBLIC_FIND = [
   "api::parent-category.parent-category",
@@ -90,7 +162,6 @@ const PUBLIC_FIND = [
   "api::product.product",
   "api::brand.brand",
   "api::banner.banner",
-  "api::home-section.home-section",
 ];
 
 async function setPublicPermissions(strapi: Core.Strapi) {
@@ -99,6 +170,7 @@ async function setPublicPermissions(strapi: Core.Strapi) {
   const wanted = [
     ...PUBLIC_FIND.flatMap((uid) => [`${uid}.find`, `${uid}.findOne`]),
     "api::site-setting.site-setting.find",
+    "api::home-page.home-page.find",
     "api::quote-request.quote-request.create",
   ];
   for (const action of wanted) {
@@ -177,19 +249,16 @@ async function seed(strapi: Core.Strapi) {
   strapi.log.info(`[seed] ${PARENT_CATEGORIES.length} parent categories, ${CATEGORIES.length} categories, ${PRODUCTS.length} products, ${BRANDS.length} brands`);
 }
 
-async function ensureHomeSections(strapi: Core.Strapi) {
+// Home page (single-type, dynamic zone). Rebuilds the default sections
+// ("Khám phá theo nhóm giải pháp" category-list + the product-list sections
+// that used to be `home-section` rows) only when the page has no sections yet,
+// or when SEED=force (schema changes get re-applied from the seed data).
+async function ensureHomePage(strapi: Core.Strapi) {
   const force = process.env.SEED === "force";
-  const count = await strapi.db.query("api::home-section.home-section").count();
-  if (count > 0 && !force) return;
-  // SEED=force → wipe existing sections so schema changes (e.g. the new
-  // parentCategory / "Xem thêm" target) get re-applied from the seed data.
-  if (count > 0 && force) {
-    const rows = await strapi.db.query("api::home-section.home-section").findMany({ select: ["documentId"] });
-    for (const id of new Set(rows.map((r: any) => r.documentId))) {
-      await strapi.documents("api::home-section.home-section").delete({ documentId: id as string });
-    }
-    strapi.log.info(`[seed] wiped ${count} existing home sections (SEED=force)`);
-  }
+  const hp = strapi.documents("api::home-page.home-page");
+  const existing: any = await hp.findFirst({ populate: { sections: true } as any });
+  if (existing?.sections?.length > 0 && !force) return;
+
   const resolveIn = (uid: "api::product.product" | "api::category.category") => async (slugs: string[] = []) => {
     const ids: string[] = [];
     for (const slug of slugs) {
@@ -199,31 +268,50 @@ async function ensureHomeSections(strapi: Core.Strapi) {
     return ids;
   };
   const resolveProducts = resolveIn("api::product.product");
+  const resolveCategories = resolveIn("api::category.category");
   // "Xem thêm" target: resolve a parent-category slug → its documentId (or undefined).
   const resolveParent = async (slug?: string) => {
     if (!slug) return undefined;
     const doc = await strapi.documents("api::parent-category.parent-category").findFirst({ filters: { slug } });
     return doc?.documentId;
   };
-  for (const s of HOME_SECTIONS) {
-    const subsections = s.subsections
-      ? await Promise.all(s.subsections.map(async (ss) => ({
-          title: ss.title,
-          products: await resolveProducts(ss.productSlugs),
-          parentCategory: await resolveParent(ss.parentCategorySlug),
-        })))
-      : [];
-    await strapi.documents("api::home-section.home-section").create({
-      data: {
-        title: s.title, order: s.order,
+
+  const productListSections = await Promise.all(
+    HOME_SECTIONS.map(async (s) => {
+      const subsections = s.subsections
+        ? await Promise.all(s.subsections.map(async (ss) => ({
+            title: ss.title,
+            products: await resolveProducts(ss.productSlugs),
+            parentCategory: await resolveParent(ss.parentCategorySlug),
+          })))
+        : [];
+      return {
+        __component: "sections.product-list" as const,
+        title: s.title,
         products: await resolveProducts(s.productSlugs ?? []),
         parentCategory: await resolveParent(s.parentCategorySlug),
         subsections,
-      } as any,
-      status: "published",
-    });
+      };
+    }),
+  );
+
+  const categoryListSection = {
+    __component: "sections.category-list" as const,
+    title: HOME_CATEGORY_LIST.title,
+    categories: await resolveCategories(HOME_CATEGORY_LIST.categorySlugs),
+  };
+
+  // Order: category tile grid first (was rendered above the product rows),
+  // then the product-list sections in their original order.
+  const sections = [categoryListSection, ...productListSections];
+
+  if (existing) {
+    await hp.update({ documentId: existing.documentId, data: { sections } as any, status: "published" });
+    strapi.log.info(`[seed] home page sections updated (${sections.length})`);
+  } else {
+    await hp.create({ data: { sections } as any, status: "published" });
+    strapi.log.info(`[seed] home page created with ${sections.length} sections`);
   }
-  strapi.log.info(`[seed] ${HOME_SECTIONS.length} home sections created`);
 }
 
 export default {
@@ -232,6 +320,7 @@ export default {
     try {
       await setPublicPermissions(strapi);
       await setVietnameseLabels(strapi);
+      await setFieldDescriptions(strapi);
       await ensureSiteSetting(strapi);
       const existing = await strapi.db.query("api::product.product").count();
       if (process.env.SEED === "force" || (existing === 0 && process.env.SEED !== "false")) {
@@ -239,7 +328,7 @@ export default {
       } else {
         strapi.log.info(`[seed] skipped (${existing} products already exist; SEED=force to reseed)`);
       }
-      await ensureHomeSections(strapi);
+      await ensureHomePage(strapi);
     } catch (err) {
       strapi.log.error("[seed] bootstrap failed: " + (err as Error).message);
     }

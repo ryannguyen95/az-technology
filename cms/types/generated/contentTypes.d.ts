@@ -522,7 +522,72 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
           preset: 'defaultHtml';
         }
       >;
-    icon: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'laptop',
+        'monitor',
+        'cpu',
+        'server',
+        'printer',
+        'camera',
+        'battery',
+        'phone',
+        'headset',
+        'truck',
+        'windows',
+        'm365',
+        'cloud',
+        'code',
+        'layers',
+        'chart',
+        'globe',
+        'lock',
+        'shield',
+        'backup',
+        'refresh',
+        'wrench',
+        'cap',
+        'building',
+        'receipt',
+        'design',
+        'microsoft',
+        'adobe',
+        'autodesk',
+        'zoom',
+        'kaspersky',
+        'eset',
+        'veeam',
+        'prtg',
+        'search',
+        'menu',
+        'close',
+        'x',
+        'check',
+        'plus',
+        'minus',
+        'mail',
+        'chat',
+        'send',
+        'quote',
+        'star',
+        'badge',
+        'sparkles',
+        'rocket',
+        'play',
+        'users',
+        'location',
+        'map',
+        'clock',
+        'zalo',
+        'video',
+        'arrow',
+        'arrowRight',
+        'arrowUp',
+        'chevronDown',
+        'chevronLeft',
+        'chevronRight',
+      ]
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -544,16 +609,16 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiHomeSectionHomeSection extends Struct.CollectionTypeSchema {
-  collectionName: 'home_sections';
+export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
+  collectionName: 'home_page';
   info: {
-    description: "C\u00E1c kh\u1ED1i s\u1EA3n ph\u1EA9m tr\u00EAn trang ch\u1EE7. Ch\u1ECDn s\u1EA3n ph\u1EA9m tr\u1EF1c ti\u1EBFp, ho\u1EB7c chia th\u00E0nh nhi\u1EC1u m\u1EE5c con. Trang ch\u1EE7 hi\u1EC3n th\u1ECB 5 s\u1EA3n ph\u1EA9m \u0111\u1EA7u; b\u1EA5m 'Xem t\u1EA5t c\u1EA3' \u0111\u1EC3 xem h\u1EBFt.";
-    displayName: 'M\u1EE5c trang ch\u1EE7';
-    pluralName: 'home-sections';
-    singularName: 'home-section';
+    description: 'Page builder trang ch\u1EE7 \u2014 th\u00EAm/xo\u00E1/s\u1EAFp x\u1EBFp c\u00E1c kh\u1ED1i (danh s\u00E1ch s\u1EA3n ph\u1EA9m, l\u01B0\u1EDBi danh m\u1EE5c).';
+    displayName: 'Trang ch\u1EE7';
+    pluralName: 'home-pages';
+    singularName: 'home-page';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
@@ -562,18 +627,13 @@ export interface ApiHomeSectionHomeSection extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::home-section.home-section'
+      'api::home-page.home-page'
     > &
       Schema.Attribute.Private;
-    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    parentCategory: Schema.Attribute.Relation<
-      'oneToOne',
-      'api::parent-category.parent-category'
-    >;
-    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
-    subsections: Schema.Attribute.Component<'home.subsection', true>;
-    title: Schema.Attribute.String & Schema.Attribute.Required;
+    sections: Schema.Attribute.DynamicZone<
+      ['sections.product-list', 'sections.category-list']
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -596,7 +656,72 @@ export interface ApiParentCategoryParentCategory
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    icon: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'laptop',
+        'monitor',
+        'cpu',
+        'server',
+        'printer',
+        'camera',
+        'battery',
+        'phone',
+        'headset',
+        'truck',
+        'windows',
+        'm365',
+        'cloud',
+        'code',
+        'layers',
+        'chart',
+        'globe',
+        'lock',
+        'shield',
+        'backup',
+        'refresh',
+        'wrench',
+        'cap',
+        'building',
+        'receipt',
+        'design',
+        'microsoft',
+        'adobe',
+        'autodesk',
+        'zoom',
+        'kaspersky',
+        'eset',
+        'veeam',
+        'prtg',
+        'search',
+        'menu',
+        'close',
+        'x',
+        'check',
+        'plus',
+        'minus',
+        'mail',
+        'chat',
+        'send',
+        'quote',
+        'star',
+        'badge',
+        'sparkles',
+        'rocket',
+        'play',
+        'users',
+        'location',
+        'map',
+        'clock',
+        'zalo',
+        'video',
+        'arrow',
+        'arrowRight',
+        'arrowUp',
+        'chevronDown',
+        'chevronLeft',
+        'chevronRight',
+      ]
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -643,7 +768,72 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     gallery: Schema.Attribute.Media<'images', true>;
     headline: Schema.Attribute.Text;
     highlights: Schema.Attribute.Component<'blocks.highlight', true>;
-    icon: Schema.Attribute.String;
+    icon: Schema.Attribute.Enumeration<
+      [
+        'laptop',
+        'monitor',
+        'cpu',
+        'server',
+        'printer',
+        'camera',
+        'battery',
+        'phone',
+        'headset',
+        'truck',
+        'windows',
+        'm365',
+        'cloud',
+        'code',
+        'layers',
+        'chart',
+        'globe',
+        'lock',
+        'shield',
+        'backup',
+        'refresh',
+        'wrench',
+        'cap',
+        'building',
+        'receipt',
+        'design',
+        'microsoft',
+        'adobe',
+        'autodesk',
+        'zoom',
+        'kaspersky',
+        'eset',
+        'veeam',
+        'prtg',
+        'search',
+        'menu',
+        'close',
+        'x',
+        'check',
+        'plus',
+        'minus',
+        'mail',
+        'chat',
+        'send',
+        'quote',
+        'star',
+        'badge',
+        'sparkles',
+        'rocket',
+        'play',
+        'users',
+        'location',
+        'map',
+        'clock',
+        'zalo',
+        'video',
+        'arrow',
+        'arrowRight',
+        'arrowUp',
+        'chevronDown',
+        'chevronLeft',
+        'chevronRight',
+      ]
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -741,6 +931,21 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
       'api::site-setting.site-setting'
     > &
       Schema.Attribute.Private;
+    logo: Schema.Attribute.Media<'images'>;
+    logoAspectRatio: Schema.Attribute.Enumeration<
+      [
+        'Vu\u00F4ng 1:1',
+        'T\u1EC9 l\u1EC7 3:2',
+        'T\u1EC9 l\u1EC7 2:1',
+        'T\u1EC9 l\u1EC7 3:1',
+        'T\u1EC9 l\u1EC7 4:1',
+        'R\u1ED9ng 16:9',
+        'Tu\u1EF3 ch\u1EC9nh',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'T\u1EC9 l\u1EC7 4:1'>;
+    logoAspectRatioCustom: Schema.Attribute.String;
+    logoDark: Schema.Attribute.Media<'images'>;
     mapUrl: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     shortName: Schema.Attribute.String;
@@ -1266,7 +1471,7 @@ declare module '@strapi/strapi' {
       'api::banner.banner': ApiBannerBanner;
       'api::brand.brand': ApiBrandBrand;
       'api::category.category': ApiCategoryCategory;
-      'api::home-section.home-section': ApiHomeSectionHomeSection;
+      'api::home-page.home-page': ApiHomePageHomePage;
       'api::parent-category.parent-category': ApiParentCategoryParentCategory;
       'api::product.product': ApiProductProduct;
       'api::quote-request.quote-request': ApiQuoteRequestQuoteRequest;

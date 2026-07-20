@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_sections_category_lists",
+  "info": {
+    "displayName": "Khối lưới danh mục",
+    "icon": "grid",
+    "description": "Một khối trang chủ hiển thị lưới các danh mục (mỗi danh mục = 1 ô)."
+  },
+  "options": {},
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "categories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category.category"
+    }
+  }
+}

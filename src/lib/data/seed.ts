@@ -27,6 +27,9 @@ export const settings: SiteSettings = {
     "1/46/28 Đặng Thùy Trâm, Phường Bình Lợi Trung, Thành phố Hồ Chí Minh, Việt Nam",
   zaloUrl: "https://zalo.me/0703594402",
   mapUrl: "https://maps.google.com/?q=AZ+Technology+Ho+Chi+Minh",
+  logo: null,
+  logoDark: null,
+  logoRatio: "4:1",
 };
 
 export const brands: Brand[] = [

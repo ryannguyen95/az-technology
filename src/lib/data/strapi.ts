@@ -133,42 +133,75 @@ export async function getBanners(): Promise<HeroBanner[]> {
   }));
 }
 
-export type RawHomeSection = {
-  title: string;
-  productSlugs: string[];
-  moreParentSlug?: string; // "Xem thêm" → parent-category page
-  subsections: { title: string; productSlugs: string[]; moreParentSlug?: string }[];
-};
+// Home page (single-type, dynamic zone `sections`). Two component types:
+// `sections.product-list` (curated product list + optional sub-sections + a
+// "Xem thêm" parent-category link) and `sections.category-list` (a grid of
+// category tiles). Slugs only — the caller (src/lib/data/index.ts) already
+// holds the full catalog and resolves slug → CatalogEntry / tile.
+export type RawHomeSection =
+  | {
+      type: "product-list";
+      title: string;
+      productSlugs: string[];
+      moreParentSlug?: string; // "Xem thêm" → parent-category page
+      subsections: { title: string; productSlugs: string[]; moreParentSlug?: string }[];
+    }
+  | {
+      type: "category-list";
+      title: string;
+      categorySlugs: string[]; // ordered — one tile per category
+    };
+
+const HOME_PAGE_POPULATE =
+  "populate[sections][on][sections.product-list][populate][products][fields][0]=slug" +
+  "&populate[sections][on][sections.product-list][populate][parentCategory][fields][0]=slug" +
+  "&populate[sections][on][sections.product-list][populate][subsections][populate][products][fields][0]=slug" +
+  "&populate[sections][on][sections.product-list][populate][subsections][populate][parentCategory][fields][0]=slug" +
+  "&populate[sections][on][sections.category-list][populate][categories][fields][0]=slug";
 
 export async function getHomeSections(): Promise<RawHomeSection[]> {
-  const json = await sFetch(
-    `/home-sections?sort=order:asc&pagination[pageSize]=50` +
-      `&populate[products][fields][0]=slug` +
-      `&populate[parentCategory][fields][0]=slug` +
-      `&populate[subsections][populate][products][fields][0]=slug` +
-      `&populate[subsections][populate][parentCategory][fields][0]=slug`,
-    ["home-sections"],
-  );
-  // A section / sub-section is a curated product list + a "Xem thêm" parent-category link.
+  const json = await sFetch(`/home-page?${HOME_PAGE_POPULATE}`, ["home-page"]);
   const slugs = (rel: any[]) => (rel ?? []).map((x: any) => x.slug).filter(Boolean);
-  return (json.data ?? []).map((s: any) => ({
-    title: s.title,
-    productSlugs: slugs(s.products),
-    moreParentSlug: s.parentCategory?.slug ?? undefined,
-    subsections: (s.subsections ?? []).map((ss: any) => ({
-      title: ss.title,
-      productSlugs: slugs(ss.products),
-      moreParentSlug: ss.parentCategory?.slug ?? undefined,
-    })),
-  }));
+  const sections = json.data?.sections ?? [];
+  return sections.map((s: any): RawHomeSection => {
+    if (s.__component === "sections.category-list") {
+      return { type: "category-list", title: s.title, categorySlugs: slugs(s.categories) };
+    }
+    return {
+      type: "product-list",
+      title: s.title,
+      productSlugs: slugs(s.products),
+      moreParentSlug: s.parentCategory?.slug ?? undefined,
+      subsections: (s.subsections ?? []).map((ss: any) => ({
+        title: ss.title,
+        productSlugs: slugs(ss.products),
+        moreParentSlug: ss.parentCategory?.slug ?? undefined,
+      })),
+    };
+  });
 }
 
+// Strapi enum values can't start with a digit ("Invalid enumeration value" —
+// requires an alphabetical char before the first number), so preset labels
+// are Vietnamese-readable strings like "Tỉ lệ 4:1" / "Vuông 1:1" / "Rộng 16:9"
+// (and "Tuỳ chỉnh" for custom). Extract the trailing "W:H" via regex to get
+// the real ratio string the data contract (and FE parseRatio) expects.
+const isValidRatio = (r?: string) => !!r && /^\d+(\.\d+)?:\d+(\.\d+)?$/.test(r.trim());
+
 export async function getSettings(): Promise<Partial<SiteSettings>> {
-  const json = await sFetch(`/site-setting`, ["site-setting"]);
+  const json = await sFetch(`/site-setting?populate[logo][fields][0]=url&populate[logoDark][fields][0]=url`, ["site-setting"]);
   const d = json.data ?? {};
+  const ratioMatch = typeof d.logoAspectRatio === "string" ? d.logoAspectRatio.match(/\d+:\d+/) : null;
+  const logoRatio =
+    d.logoAspectRatio === "Tuỳ chỉnh"
+      ? (isValidRatio(d.logoAspectRatioCustom) ? d.logoAspectRatioCustom.trim() : "4:1")
+      : (ratioMatch ? ratioMatch[0] : "4:1");
   return {
     company: d.company, shortName: d.shortName, slogan: d.slogan, hotline: d.hotline,
     email: d.email, address: d.address, zaloUrl: d.zaloUrl, mapUrl: d.mapUrl,
+    logo: d.logo?.url ? absolute(d.logo.url) : null,
+    logoDark: d.logoDark?.url ? absolute(d.logoDark.url) : null,
+    logoRatio,
   };
 }
 

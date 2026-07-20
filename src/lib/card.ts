@@ -21,7 +21,7 @@ const KIND_LABEL: Record<string, string> = {
   software: "Phần mềm",
   solution: "Giải pháp",
   service: "Dịch vụ",
-  category: "Phần cứng",
+  category: "Danh mục", // fallback; danh mục con hiển thị tên nhóm cha (e.parentTitle)
   product: "Sản phẩm",
 };
 
@@ -32,6 +32,8 @@ const brandName = (slug?: string) =>
 // whatever the CMS entry actually has: kind label + first brand.
 function catLine(e: CatalogEntry): string {
   const bn = brandName(e.brandSlugs?.[0]);
+  // Danh mục con: eyebrow = nhóm cha thật (Phần mềm/Phần cứng/…), KHÔNG hardcode theo kind.
+  if (e.kind === "category") return e.parentTitle ?? KIND_LABEL.category;
   const kind = KIND_LABEL[e.kind] ?? "Sản phẩm";
   return bn ? `${kind} · ${bn}` : kind;
 }

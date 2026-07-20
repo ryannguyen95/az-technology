@@ -1,0 +1,17 @@
+{
+  "kind": "singleType",
+  "collectionName": "home_page",
+  "info": {
+    "singularName": "home-page",
+    "pluralName": "home-pages",
+    "displayName": "Trang chủ",
+    "description": "Page builder trang chủ — thêm/xoá/sắp xếp các khối (danh sách sản phẩm, lưới danh mục)."
+  },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "sections": {
+      "type": "dynamiczone",
+      "components": ["sections.product-list", "sections.category-list"]
+    }
+  }
+}
