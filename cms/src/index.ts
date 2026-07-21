@@ -92,7 +92,7 @@ async function setVietnameseLabels(strapi: Core.Strapi) {
 // Helper text (ghi chú kích thước ảnh, hướng dẫn icon…) hiển thị dưới field trong
 // Content Manager. Strapi KHÔNG lấy từ schema.json `description` — phải set vào cấu hình
 // content-manager (metadatas.<field>.edit.description), y như cách set label ở trên.
-// Field ảnh mới → thêm ghi chú kích thước ở đây (theo rynex-process/roles/backend-dev.md).
+// Field ảnh mới → BẮT BUỘC thêm ghi chú kích thước ở đây (quy tắc trong CLAUDE.md · backend-dev).
 const CT_DESCRIPTIONS: Record<string, Record<string, string>> = {
   "api::parent-category.parent-category": {
     icon: "Chọn biểu tượng hiển thị. Danh sách đồng bộ với bộ icon trong code (src/components/Icon.tsx); cần icon mới → báo dev thêm.",
