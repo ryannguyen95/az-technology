@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "deploy:staging": "bash deploy/build.sh staging && bash deploy/deploy.sh staging",
+    "deploy:prod": "bash deploy/build.sh prod && bash deploy/deploy.sh prod"
   },
   "dependencies": {
     "next": "15.5.7",
