@@ -3,14 +3,15 @@ import { test, expect } from "@playwright/test";
 /**
  * E2E — Logo từ CMS (task-slug `logo-cms`).
  *
- * Nguồn spec: agents-report/logo-cms/agent-lead/feature-spec.md (AC2-AC5)
- *             + agents-report/logo-cms/backend-dev/data-contract.md.
+ * Nguồn spec: feature logo-cms (đã merge). Quyết định thiết kế logo lưu ở
+ *             GitHub issue #7 "[docs] Quyết định kiến trúc & thiết kế đã chốt".
+ *             Contract = src/lib/types.ts (site-setting.logo/logoDark/logoRatio).
  *
- * Cover TC1-TC7 (test-cases.md). TC8/TC9 (fallback lockup + dùng chéo khi
+ * Cover TC1-TC7. TC8/TC9 (fallback lockup + dùng chéo khi
  * thiếu 1 trong 2 ảnh) CHỦ Ý để ngoài E2E ở vòng này — cần set
  * site-setting.logo/logoDark = null trên Strapi thật (đụng DB), ngoài phạm
- * vi cho phép của vòng verify này. Đã verify các case đó bằng đọc code +
- * bằng chứng browser thật của frontend-dev (xem test-report.md).
+ * vi cho phép của vòng verify này. Đã verify các case đó thủ công trên
+ * browser thật (fallback lockup + logic chọn logo theo nền).
  *
  * Các test tự set viewport cần thiết qua `page.setViewportSize` thay vì dựa
  * vào `projects` device preset, để đảm bảo hành vi xác định (deterministic)

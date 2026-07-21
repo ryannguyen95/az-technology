@@ -1,8 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // Minimal Playwright setup for AZ Technology E2E tests.
-// FE dev server for this repo is commonly run on :3005 (see agents-report qa-e2e progress notes);
-// override via PLAYWRIGHT_BASE_URL if a different port is used locally.
+// Web dev server chuẩn của AZ chạy ở :3001 (PORT=3001 bun run dev).
+// Override qua PLAYWRIGHT_BASE_URL nếu chạy port khác locally.
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -10,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3005",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3001",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
