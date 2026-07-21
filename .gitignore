@@ -48,3 +48,4 @@ yarn-error.log*
 
 # spurious npm lock (cms dùng yarn)
 /cms/package-lock.json
+*.pem.pub
