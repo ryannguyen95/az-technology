@@ -5,13 +5,13 @@
       "name": "az-web",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "port": 3001
+      "port": 3004
     },
     {
       "name": "strapi",
       "runtimeExecutable": "/Users/nguyendinhphuc/.nvm/versions/node/v22.20.0/bin/node",
       "runtimeArgs": ["node_modules/@strapi/strapi/bin/strapi.js", "develop"],
-      "cwd": "/Users/nguyendinhphuc/Documents/OwnApp/projects/az-technology/cms",
+      "cwd": "/Users/nguyendinhphuc/Documents/Rynex/projects/az-technology/cms",
       "port": 1337
     }
   ]
