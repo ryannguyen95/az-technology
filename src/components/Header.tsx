@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { MegaItem } from "@/lib/nav";
 import { Icon } from "./Icon";
@@ -84,7 +85,12 @@ function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void;
   return (
     <div className={`fixed inset-0 z-[110] lg:hidden ${open ? "" : "pointer-events-none"}`}>
       <div className={`absolute inset-0 bg-navy-deep/50 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
-      <div className={`absolute top-0 left-0 h-full w-[86%] max-w-sm bg-white shadow-pop transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu điều hướng"
+        className={`absolute top-0 left-0 h-full w-[86%] max-w-sm bg-white shadow-pop transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`}
+      >
         <div className="az-grad-navy text-white px-4 py-4 flex items-center justify-between">
           <AZLogo light logo={settings.logo} logoDark={settings.logoDark} logoRatio={settings.logoRatio} />
           <button onClick={onClose} aria-label="Đóng" className="w-9 h-9 grid place-items-center rounded-full bg-white/15">
@@ -95,6 +101,9 @@ function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void;
           <SearchBox onNavigate={onClose} />
         </div>
         <nav className="flex-1 overflow-y-auto az-scroll px-2 pb-4">
+          <div className="border-b border-slate-100">
+            <Link href="/" onClick={onClose} className="block px-3 py-3.5 font-extrabold text-navy text-[15px]">Trang chủ</Link>
+          </div>
           {nav.map((item) => (
             <div key={item.key} className="border-b border-slate-100">
               {item.columns ? (
@@ -128,7 +137,15 @@ function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void;
             </div>
           ))}
         </nav>
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100 space-y-2.5">
+          <a
+            href={`tel:${settings.hotline.replace(/\s/g, "")}`}
+            aria-label={`Hotline ${settings.hotline}`}
+            className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-primary text-primary bg-white py-3 text-sm font-bold hover:bg-primary-50 transition-colors"
+          >
+            <Icon name="phone" className="w-[18px] h-[18px]" />
+            {settings.hotline}
+          </a>
           <Button variant="primary" className="w-full" icon="send" onClick={() => { onClose(); openQuote({ mode: "full" }); }}>
             NHẬN BÁO GIÁ
           </Button>
@@ -145,6 +162,8 @@ export function Header({ nav }: { nav: MegaItem[] }) {
   const { openQuote } = useQuote();
   const settings = useSettings();
   const tel = settings.hotline.replace(/\s/g, "");
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   const enter = (key: string) => {
     if (timer.current) clearTimeout(timer.current);
@@ -200,7 +219,16 @@ export function Header({ nav }: { nav: MegaItem[] }) {
         {/* nav row */}
         <div className="hidden lg:block border-t border-slate-100 relative">
           <div className="max-w-site mx-auto px-4">
-            <nav className="flex items-center gap-0.5">
+            <nav aria-label="Danh mục" className="flex items-center gap-0.5">
+              <div className="relative">
+                <Link
+                  href="/"
+                  className={`flex items-center px-3.5 py-3 text-[13.5px] font-extrabold tracking-wide whitespace-nowrap transition-colors ${isHome ? "text-primary" : "text-navy hover:text-primary"}`}
+                >
+                  Trang chủ
+                  {isHome && <span className="absolute left-3 right-3 -bottom-px h-0.5 bg-primary rounded-full" />}
+                </Link>
+              </div>
               {nav.map((item) => {
                 const isActive = active === item.key;
                 return (
@@ -216,6 +244,14 @@ export function Header({ nav }: { nav: MegaItem[] }) {
                   </div>
                 );
               })}
+              <a
+                href={`tel:${tel}`}
+                aria-label={`Hotline ${settings.hotline}`}
+                className="ml-auto flex items-center gap-1.5 pl-4 pr-1 py-3 text-[13.5px] font-extrabold text-primary hover:text-primary-700 transition-colors whitespace-nowrap"
+              >
+                <Icon name="phone" className="w-4 h-4" />
+                {settings.hotline}
+              </a>
             </nav>
           </div>
           {current && (
