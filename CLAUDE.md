@@ -116,26 +116,35 @@ UI nghiệm thu chuẩn **giống 100%** design, KHÔNG "gần giống".
 Use the claude_design MCP (https://api.anthropic.com/v1/design/mcp, auth via /design-login) to import this project:
 https://claude.ai/design/p/3a3417eb-ccf0-4835-b4c6-51e0da11521a?file=index.html
 ```
-- Đầu mỗi feature: sync design mới nhất từ MCP → lưu vào `design/` ở root. Chạy prototype trong `design/` trên browser (`cd design && python3 -m http.server 8899`) để hiểu UX thật.
+- Đầu mỗi feature: sync design mới nhất từ MCP → lưu vào `design/` ở root. Chạy prototype trong `design/` trên browser (`cd design && python3 -m http.server <port design prototype trong Registry>`) để hiểu UX thật.
 - Không mở/import được → báo User chạy `/design-login`, KHÔNG bịa.
 - Ràng buộc bắt buộc: cyan **#00D1FF chỉ trang trí** (WCAG — không dùng cho text/contrast quan trọng); consent PDPD ở form báo giá.
 - Softvn.vn / pacisoft.vn chỉ là cảm hứng, **KHÔNG phải nguồn design**.
 
-## Port & verify env (INLINE — không dùng registry ngoài)
-- **web:** `3001` — `PORT=3001 bun run dev` (mặc định `DATA_SOURCE=seed`; dùng `strapi` khi test luồng CMS).
-- **cms (Strapi):** `1337` — `bash scripts/strapi-dev.sh` (Node 22 qua nvm), admin `http://localhost:1337/admin`. Đổi schema Strapi → **restart Strapi** để regenerate types/API. (Port ẩn: Strapi admin Vite dev server pin cứng `1338` trong `cms/src/admin/vite.config.ts` — `strictPort`, không auto-increment.)
-- **design prototype:** `8899` — `cd design && python3 -m http.server 8899`.
-- **CDP (Chrome debug do User mở):** `9222`, `--user-data-dir=/tmp/az-chrome`.
-- KHÔNG tự chế port khác, KHÔNG kill port dự án khác. Va chạm/cần port mới → raise User.
+## Port & verify env
+
+🔴 **File này KHÔNG quy định port. Nguồn chân lý DUY NHẤT là Port Registry của cả máy:**
+`/Users/nguyendinhphuc/Documents/Rynex/rynex-process/ports-registry.md`
+
+**Trước khi start bất kỳ dev server nào, mở Registry đọc port của AZ.** Không lấy port từ file này, không lấy default của framework, không đoán theo trí nhớ.
+
+Lý do bảng port inline bị gỡ: nó từng ghi `web = 3001` trong khi thực tế đã dời sang `3004` từ 2026-08-06 — `3001` nay là ScriptServe api. Registry cũng đã ghi nhận một sự cố đúng kiểu này (2026-08-07): một agent đọc bảng port trong `CLAUDE.md` của dự án rồi start luôn, cướp port đang tranh chấp. **`CLAUDE.md` dự án không thay được Registry** — bảng chép tay sẽ lệch, và lệch im lặng.
+
+Những thứ KHÔNG phải port, vẫn thuộc về file này:
+- **web:** `bun run dev` (port đã pin cứng trong `package.json` dev script). Mặc định `DATA_SOURCE=seed`; dùng `strapi` khi test luồng CMS.
+- **cms (Strapi):** `bash scripts/strapi-dev.sh` (Node 22 qua nvm), admin ở `/admin`. Đổi schema Strapi → **restart Strapi** để regenerate types/API.
+- **design prototype:** `cd design && python3 -m http.server <port trong Registry>`.
+- **Worktree:** port = port gốc của AZ **+10** (worktree thứ hai +20), theo mục "Dải worktree" của Registry. Cây chính không có ngoại lệ.
+- Đụng port thì **tự tra sổ → chọn port trống → tự cập nhật Registry** ngay trong cùng lần làm việc. KHÔNG kill port dự án khác. Kiểm bằng máy: `python3 /Users/nguyendinhphuc/Documents/Rynex/rynex-process/tools/check-ports.py`, rồi `lsof -iTCP -sTCP:LISTEN -P -n` để lộ port ẩn.
 
 ## 🔴 LUẬT DoD — OBSERVED-IN-BROWSER (bất khả xâm phạm)
 **KHÔNG được báo User "done"** cho bất kỳ thay đổi nào có mặt hiển thị (trang public HOẶC admin/CMS) khi **chưa tự mở browser thật nhìn thấy nó chạy đúng**. Bằng chứng gián tiếp (schema/DB/typecheck/log/"giống tiền lệ") **KHÔNG đủ** — phải quan sát chính bề mặt render. **Cấm đẩy verify cơ bản sang User.** Bug cơ bản (mở lên phát thấy ngay) lọt tới User = lỗi của bạn.
 
 **2 đường mở browser thật:**
-- **(a) Headless Playwright tự launch** — `chromium.launch({ headless: true })` (đã xác nhận chạy được trong repo, KHÔNG cần Chrome User, KHÔNG cướp focus). **Mặc định để verify nhanh** trang public `:3001`; điều khiển bằng script Node qua Bash, chụp screenshot làm bằng chứng.
-- **(b) CDP attach** vào Chrome debug do User mở (`:9222`, `--user-data-dir=/tmp/az-chrome`) — khi cần **nhìn trạng thái đã đăng nhập** (admin/CMS `:1337/admin`), so pixel design, hoặc thao tác trên phiên thật.
-- Bề mặt **admin/CMS cần đăng nhập:** headless verify cần **credential admin test** (xin User cấp + lưu env, **KHÔNG hardcode/commit**), hoặc User mở Chrome debug `:9222` đã đăng nhập sẵn để attach CDP. Chưa có 1 trong 2 → verify admin bị chặn, **raise User**, KHÔNG báo done bằng suy luận schema/DB.
-- Trước khi spawn `designer`/`qa-e2e`: tự xác nhận servers lên + đường browser (headless hoặc CDP `:9222`) sẵn sàng.
+- **(a) Headless Playwright tự launch** — `chromium.launch({ headless: true })` (đã xác nhận chạy được trong repo, KHÔNG cần Chrome User, KHÔNG cướp focus). **Mặc định để verify nhanh** trang public (port web lấy từ Registry); điều khiển bằng script Node qua Bash, chụp screenshot làm bằng chứng.
+- **(b) CDP attach** vào Chrome debug do User mở (port CDP + `--user-data-dir=/tmp/az-chrome` theo Registry) — khi cần **nhìn trạng thái đã đăng nhập** (admin/CMS ở `/admin`), so pixel design, hoặc thao tác trên phiên thật.
+- Bề mặt **admin/CMS cần đăng nhập:** headless verify cần **credential admin test** (xin User cấp + lưu env, **KHÔNG hardcode/commit**), hoặc User mở Chrome debug đã đăng nhập sẵn để attach CDP. Chưa có 1 trong 2 → verify admin bị chặn, **raise User**, KHÔNG báo done bằng suy luận schema/DB.
+- Trước khi spawn `designer`/`qa-e2e`: tự xác nhận servers lên + đường browser (headless hoặc CDP) sẵn sàng.
 
 ## 🔎 SEO là yêu cầu bậc nhất (cân nhắc MỌI feature đụng page/content)
 Site marketing B2B — SEO là kênh tăng trưởng chính. Với mọi feature đụng page/content, cân nhắc & lan trách nhiệm xuống agent:
@@ -163,11 +172,11 @@ Thứ tự fix: **Blocker > Major > Minor.** arch-review KHÔNG approve khi còn
 
 1. **Confirm requirement với User** — hỏi hết ambiguity. Tạo/ cập nhật **GitHub Issue** cho feature (Phần B).
 2. **Chốt nguồn design** (sync Claude Design MCP → `design/`). Không được → báo User, không bịa.
-3. **Mở app thật trên browser** (`:3001`), tương tác trực tiếp UI liên quan, chạy đủ user flow.
+3. **Mở app thật trên browser** (port web lấy từ Registry), tương tác trực tiếp UI liên quan, chạy đủ user flow.
 4. Gap Design ↔ Requirement → quay lại thảo luận User. Ghi decision vào issue.
 5. **Breakdown task** cho từng agent (ghi lên Project) — chỉ sau khi Requirement + Design chốt. Chốt shape data trong `src/lib/types.ts` (không file contract riêng).
 6. **Spawn `backend-dev` + `frontend-dev`** (qua Agent tool): song song nếu type/contract đã chốt; tuần tự nếu FE phải chờ. **Nạp context vào prompt** (path được sửa, shape data, màn cần dựng, design nguồn, port). Đổi trạng thái ticket → `In progress`.
-7. **Chuẩn bị môi trường verify** (bắt buộc trước khi verify / spawn designer / qa-e2e): servers lên (web + cms + seed) + đường browser (headless hoặc CDP `:9222`) sẵn sàng.
+7. **Chuẩn bị môi trường verify** (bắt buộc trước khi verify / spawn designer / qa-e2e): servers lên (web + cms + seed, port theo Registry) + đường browser (headless hoặc CDP) sẵn sàng.
 8. Sau khi BE + FE xong → spawn `arch-review`; song song (khi env verify OK) có thể spawn `designer`. Ticket → `In review`.
 9. `arch-review` / `designer` request changes → loop lại BE/FE theo severity (Blocker > Major > Minor), nạp lại context vào prompt mỗi lần spawn.
 10. arch-review approve + designer hết Blocker/Major → spawn `qa-e2e` (verify browser thật + Playwright E2E khi feature chạy đúng).
