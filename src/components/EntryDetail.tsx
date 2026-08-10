@@ -11,12 +11,11 @@ import { InlineQuoteForm } from "./InlineQuoteForm";
 import { CTAStrip } from "./CTAStrip";
 import { ProductCard } from "./ProductCard";
 
-// Same 3 marketing badges for every product (design decision — not from the CMS).
-const BADGES = ["Miễn phí tư vấn", "Miễn phí triển khai cho số lượng lớn", "Vô vàn ưu đãi"];
+// Same 2 marketing badges for every product (design decision — not from the CMS).
+const BADGES = ["Miễn phí tư vấn", "Miễn phí triển khai cho số lượng lớn"];
 const BADGE_COLORS = [
   "bg-cyan-50 text-cyan-700 border-cyan-200",
   "bg-amber-50 text-amber-700 border-amber-200",
-  "bg-emerald-50 text-emerald-700 border-emerald-200",
 ];
 
 function CommitmentBox({ settings }: { settings: SiteSettings }) {
