@@ -36,6 +36,8 @@ export function Button({
   onClick,
   type,
   ariaLabel,
+  target,
+  rel,
 }: {
   variant?: Variant;
   size?: Size;
@@ -48,6 +50,8 @@ export function Button({
   onClick?: () => void;
   type?: "button" | "submit";
   ariaLabel?: string;
+  target?: "_blank";
+  rel?: string;
 }) {
   const base =
     "inline-flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-200 select-none active:scale-[.97] whitespace-nowrap";
@@ -63,7 +67,14 @@ export function Button({
     const external = href.startsWith("http") || href.startsWith("tel:") || href.startsWith("mailto:");
     if (external)
       return (
-        <a href={href} onClick={onClick} className={cls} aria-label={ariaLabel}>
+        <a
+          href={href}
+          onClick={onClick}
+          className={cls}
+          aria-label={ariaLabel}
+          target={target}
+          rel={target === "_blank" ? (rel ?? "noopener noreferrer") : rel}
+        >
           {content}
         </a>
       );
