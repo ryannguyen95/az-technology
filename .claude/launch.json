@@ -5,7 +5,7 @@
       "name": "az-web",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "port": 3004
+      "port": 3014
     },
     {
       "name": "strapi",
