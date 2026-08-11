@@ -458,6 +458,7 @@ export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
     ctaHref: Schema.Attribute.String;
     ctaLabel: Schema.Attribute.String;
     image: Schema.Attribute.Media<'images'>;
+    imageMobile: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

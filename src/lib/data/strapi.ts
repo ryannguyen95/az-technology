@@ -121,13 +121,14 @@ export async function getAllEntries(): Promise<CatalogEntry[]> {
 
 export async function getBanners(): Promise<HeroBanner[]> {
   const json = await sFetch(
-    `/banners?filters[active][$eq]=true&sort=order:asc&pagination[pageSize]=20&populate[image][fields][0]=url`,
+    `/banners?filters[active][$eq]=true&sort=order:asc&pagination[pageSize]=20&populate[image][fields][0]=url&populate[imageMobile][fields][0]=url`,
     ["banners"],
   );
   return (json.data ?? []).map((b: any) => ({
     id: b.documentId ?? String(b.id),
     title: b.title,
     image: b.image?.url ? absolute(b.image.url) : null,
+    imageMobile: b.imageMobile?.url ? absolute(b.imageMobile.url) : null,
     ctaLabel: b.ctaLabel ?? undefined,
     ctaHref: b.ctaHref ?? undefined,
   }));

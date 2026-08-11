@@ -21,7 +21,8 @@ const VI_LABELS: Record<string, Record<string, string>> = {
   },
   "api::brand.brand": { name: "Tên thương hiệu", slug: "Đường dẫn (slug)", products: "Sản phẩm" },
   "api::banner.banner": {
-    title: "Tiêu đề", image: "Hình ảnh", ctaLabel: "Nhãn nút", ctaHref: "Liên kết nút",
+    title: "Tiêu đề", image: "Hình ảnh (desktop)", imageMobile: "Hình ảnh (mobile)",
+    ctaLabel: "Nhãn nút", ctaHref: "Liên kết nút",
     order: "Thứ tự", active: "Đang hiển thị",
   },
   "api::quote-request.quote-request": {
@@ -107,6 +108,7 @@ const CT_DESCRIPTIONS: Record<string, Record<string, string>> = {
   },
   "api::banner.banner": {
     image: "Kích thước đề xuất 1920×640 (tỉ lệ 3:1), JPG/WebP, ≤400KB. Ảnh sẽ bị cắt để lấp đầy khung — đặt nội dung/chữ quan trọng vào giữa.",
+    imageMobile: "Ảnh hiển thị trên điện thoại. Kích thước đề xuất 1200×900 (tỉ lệ 4:3), JPG/WebP, ≤300KB. Bỏ trống thì điện thoại dùng chung ảnh desktop (khung giữ tỉ lệ ngang để không bị cắt hỏng).",
   },
   "api::site-setting.site-setting": {
     logo: "Logo nền sáng (header). PNG/WebP nền trong suốt, cao ≥80px, KHÔNG dùng SVG.",
