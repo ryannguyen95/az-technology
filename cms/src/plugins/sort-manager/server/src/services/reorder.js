@@ -14,6 +14,20 @@
 const isInt = (n) => typeof n === "number" && Number.isInteger(n) && n >= 0;
 const isId = (s) => typeof s === "string" && s.length > 0;
 
+// Lỗi do CLIENT gửi sai — được phép lộ `.message` ra response và trả 400.
+// Mọi lỗi khác (DB, Document Service, lập trình) là lỗi hệ thống: KHÔNG lộ
+// message thật ra response (có thể chứa tên bảng/cột/driver), trả 500, và
+// log message thật ở server để debug. Controller phân biệt hai loại bằng cờ
+// `isReorderValidationError` gắn ở đây — không dùng `instanceof` xuyên module
+// boundary cho chắc (`server/` được Strapi require theo cách riêng).
+class ReorderValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "ReorderValidationError";
+    this.isReorderValidationError = true;
+  }
+}
+
 // Không tin client: validate trước khi mở transaction. Chặn cả trường hợp UI
 // có bug lẫn ai đó gọi thẳng API (route type: "admin" nhưng vẫn không tin dữ
 // liệu vào). UI (Task 10) validate lại là tiện lợi, không phải bảo vệ.
@@ -22,21 +36,21 @@ const isId = (s) => typeof s === "string" && s.length > 0;
 function assertValid(payload) {
   for (const p of payload.parents ?? []) {
     if (!isId(p.documentId) || !isInt(p.order)) {
-      throw new Error("parents: documentId phải là chuỗi, order phải là số nguyên ≥ 0");
+      throw new ReorderValidationError("parents: documentId phải là chuỗi, order phải là số nguyên ≥ 0");
     }
   }
   for (const c of payload.categories ?? []) {
     if (!isId(c.documentId) || !isInt(c.order) || !isId(c.parentDocumentId)) {
-      throw new Error("categories: thiếu documentId / order / parentDocumentId hợp lệ");
+      throw new ReorderValidationError("categories: thiếu documentId / order / parentDocumentId hợp lệ");
     }
   }
   for (const p of payload.products ?? []) {
     if (!isId(p.documentId) || !isInt(p.order) || !isId(p.categoryDocumentId)) {
-      throw new Error("products: thiếu documentId / order / categoryDocumentId hợp lệ");
+      throw new ReorderValidationError("products: thiếu documentId / order / categoryDocumentId hợp lệ");
     }
   }
   const total = (payload.parents?.length ?? 0) + (payload.categories?.length ?? 0) + (payload.products?.length ?? 0);
-  if (total === 0) throw new Error("Không có thay đổi nào để lưu");
+  if (total === 0) throw new ReorderValidationError("Không có thay đổi nào để lưu");
 }
 
 // Strapi v5 giữ HAI bản trên cùng documentId: draft và published. Chỉ update
@@ -63,6 +77,18 @@ function assertValid(payload) {
 // không hề rollback. Vì vậy phải tự throw khi `update()` trả về falsy để
 // transaction có cái để rollback theo.
 //
+// ⚠️ Cùng một lớp bug ở `publish()` (arch-review round 1 bắt được, đã tự trace
+// lại `repository.js:383-450` để xác nhận): `publish()` tự dựng
+// `draftsToPublish` từ một `findMany({ where: { documentId, publishedAt: null
+// } })` MỚI — không dùng lại kết quả `findOne` phía trên. Nếu document bị
+// unpublish/xoá đúng lúc giữa `findOne` và `publish()` (race với một phiên
+// admin khác), `draftsToPublish` rỗng → `publish()` trả `{ documentId,
+// entries: [] }`, KHÔNG throw. Nguy hiểm hơn: dòng 429 của cùng hàm xoá
+// `oldPublishedVersions` VÔ ĐIỀU KIỆN trước khi tạo bản mới — rơi vào cửa sổ
+// race đó thì bản published đang có bị xoá mà không có gì thay thế. Vì vậy
+// bắt kết quả `publish()` và throw nếu `entries` rỗng/falsy, cùng cách đã làm
+// với `update()`.
+//
 // @param {import("@strapi/strapi").Core.Strapi} strapi
 // @param {"api::parent-category.parent-category"|"api::category.category"|"api::product.product"} uid
 // @param {string} documentId
@@ -75,9 +101,21 @@ async function updateBoth(strapi, uid, documentId, data) {
 
   const published = await strapi.documents(uid).findOne({ documentId, status: "published", fields: ["documentId"] });
   if (published) {
-    await strapi.documents(uid).publish({ documentId });
+    const publishResult = await strapi.documents(uid).publish({ documentId });
+    if (!publishResult?.entries?.length) {
+      throw new Error(
+        `${uid}: publish() cho documentId "${documentId}" không tạo được bản published nào (entries rỗng) — có thể document vừa bị unpublish/xoá bởi một phiên khác`
+      );
+    }
   }
 }
+
+// Trần thời gian chờ revalidate. TCP nối được nhưng server phía kia không
+// bao giờ trả response (arch-review round 1 bắt được) thì `try/catch` không
+// cứu được — `fetch()` không tự timeout, request admin sẽ treo vô hạn dù
+// transaction lưu dữ liệu đã commit từ lâu. Đúng thứ luật "revalidate lỗi
+// không được làm hỏng save" muốn tránh, nên phải tự chặn bằng AbortController.
+const REVALIDATE_TIMEOUT_MS = 4000;
 
 // Đẩy thay đổi lên site ngay sau khi lưu. Lỗi ở bước này KHÔNG được làm hỏng
 // thao tác lưu — dữ liệu đã ghi xong rồi (transaction đã commit), cùng lắm
@@ -89,16 +127,23 @@ async function revalidateWeb(strapi) {
   const webUrl = process.env.WEB_URL;
   const secret = process.env.REVALIDATE_SECRET;
   if (!webUrl || !secret) return false;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REVALIDATE_TIMEOUT_MS);
   try {
     const res = await fetch(`${webUrl}/api/revalidate`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-revalidate-secret": secret },
       body: JSON.stringify({ tags: ["parent-categories", "categories", "products"] }),
+      signal: controller.signal,
     });
     return res.ok;
   } catch (err) {
-    strapi.log.warn(`sort-manager: revalidate call to ${webUrl}/api/revalidate failed: ${err?.message ?? err}`);
+    const reason = err?.name === "AbortError" ? `timed out after ${REVALIDATE_TIMEOUT_MS}ms` : (err?.message ?? err);
+    strapi.log.warn(`sort-manager: revalidate call to ${webUrl}/api/revalidate failed: ${reason}`);
     return false;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -141,4 +186,4 @@ async function reorder(strapi, payload) {
   };
 }
 
-module.exports = { reorder, assertValid };
+module.exports = { reorder, assertValid, ReorderValidationError };
