@@ -89,6 +89,8 @@ function MobileNav({ open, onClose, nav }: { open: boolean; onClose: () => void;
         role="dialog"
         aria-modal="true"
         aria-label="Menu điều hướng"
+        aria-hidden={!open}
+        inert={!open}
         className={`absolute top-0 left-0 h-full w-[86%] max-w-sm bg-white shadow-pop transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="az-grad-navy text-white px-4 py-4 flex items-center justify-between">
