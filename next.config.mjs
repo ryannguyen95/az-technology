@@ -21,9 +21,13 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       // Cloudflare R2 public bucket (r2.dev dev URL or a custom domain).
       { protocol: "https", hostname: "**.r2.dev" },
-      // Local Strapi media during development.
-      { protocol: "http", hostname: "localhost", port: "1337" },
-      { protocol: "http", hostname: "127.0.0.1", port: "1337" },
+      // Local Strapi media during development. No `port` on purpose: the main
+      // tree runs Strapi on 1337 but every worktree runs it on 1337+10n per the
+      // Port Registry's worktree rule, and pinning the port here silently broke
+      // every image with a 500 when DATA_SOURCE=strapi in a worktree. Loopback
+      // hosts only, so leaving the port open costs nothing.
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "http", hostname: "127.0.0.1" },
     ],
   },
 };
