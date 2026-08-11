@@ -104,6 +104,58 @@ function Row({
   );
 }
 
+// Dùng cho danh sách KHÔNG cho kéo (danh mục con mồ côi — xem ghi chú ở chỗ
+// dùng). Cùng khung nhìn với `Row` nhưng không có handle/useSortable, để
+// không tạo cảm giác "kéo được" cho một thao tác không lưu được gì.
+function StaticRow({ label, depth, children }: { label: string; depth: number; children?: React.ReactNode }) {
+  return (
+    <div style={{ paddingLeft: depth * 24 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 12px",
+          border: "1px solid #eaeaef",
+          borderRadius: 4,
+          background: "#fff",
+          marginBottom: 4,
+        }}
+      >
+        <span style={{ width: 16, display: "inline-block" }} />
+        <span>{label}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Vị trí một item đang nằm ở đâu — dùng để so cây gốc với cây đang sửa và chỉ
+// gửi lên server những gì thật sự đổi (Important 1, fix round 1).
+type Loc = { containerId: string; index: number };
+const ORPHAN_CONTAINER = "__orphan__";
+
+function categoryLocations(t: TreeResponse): Map<string, Loc> {
+  const map = new Map<string, Loc>();
+  for (const p of t.parents) {
+    p.children.forEach((c, i) => map.set(c.documentId, { containerId: p.documentId, index: i }));
+  }
+  // Danh mục mồ côi không có container thật — nhóm chung một khoá giả để so
+  // sánh "vẫn còn mồ côi hay đã được gán cha" là đủ, index ở đây không dùng.
+  t.orphanCategories.forEach((c) => map.set(c.documentId, { containerId: ORPHAN_CONTAINER, index: -1 }));
+  return map;
+}
+
+function productLocations(t: TreeResponse): Map<string, Loc> {
+  const map = new Map<string, Loc>();
+  const allCats = [...t.parents.flatMap((p) => p.children), ...t.orphanCategories];
+  for (const c of allCats) {
+    c.products.forEach((pr, i) => map.set(pr.documentId, { containerId: c.documentId, index: i }));
+  }
+  t.orphanProducts.forEach((pr) => map.set(pr.documentId, { containerId: ORPHAN_CONTAINER, index: -1 }));
+  return map;
+}
+
 export default function SortPage() {
   const [tree, setTree] = useState<TreeResponse | null>(null);
   const [original, setOriginal] = useState<TreeResponse | null>(null);
@@ -134,6 +186,19 @@ export default function SortPage() {
     void load();
   }, []);
 
+  // Cảnh báo trước khi rời trang/đóng tab khi còn thay đổi chưa lưu (Important
+  // 3, fix round 1). Chỉ đăng ký handler khi `dirty` — trình duyệt tự bỏ qua
+  // `beforeunload` không có `dirty` gì để hỏi.
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
   // Chỉ cho kéo trong cùng một danh sách (cùng cha/cùng danh mục). Chuyển cha
   // hoặc chuyển danh mục làm bằng select "Thuộc" trên từng dòng — kéo ngang
   // giữa các nhánh gộp/mở là nguồn lỗi lớn (nhánh đích đang đóng thì không có
@@ -151,13 +216,6 @@ export default function SortPage() {
         const parent = next.parents.find((p) => p.documentId === listId.slice("parent:".length))!;
         const ids = parent.children.map((c) => c.documentId);
         parent.children = arrayMove(parent.children, ids.indexOf(String(active.id)), ids.indexOf(String(over.id)));
-      } else if (listId === "orphan-categories") {
-        const ids = next.orphanCategories.map((c) => c.documentId);
-        next.orphanCategories = arrayMove(
-          next.orphanCategories,
-          ids.indexOf(String(active.id)),
-          ids.indexOf(String(over.id)),
-        );
       } else {
         const catId = listId.slice("category:".length);
         const allCats = [...next.parents.flatMap((p) => p.children), ...next.orphanCategories];
@@ -217,31 +275,67 @@ export default function SortPage() {
 
   const urlChanges = useMemo(() => (tree && original ? diffUrls(original, tree) : []), [tree, original]);
 
+  // Chỉ gửi lên server những bản ghi có vị trí/nhóm cha thật sự đổi so với
+  // `original` (Important 1, fix round 1). Trước đây payload luôn liệt kê lại
+  // TOÀN BỘ cây (mọi parent/category/product, đánh số 0..n) mỗi lần lưu — kéo
+  // một hàng tốn tới ~167 update + republish trên một catalog cỡ này, chạm
+  // `updatedAt` của hàng loạt bản ghi không hề đổi.
   const payload: ReorderPayload = useMemo(() => {
-    if (!tree) return {};
-    const allCategoriesFlat = [
-      ...tree.parents.flatMap((p) => p.children),
-      ...tree.orphanCategories,
-    ];
-    return {
-      parents: tree.parents.map((p, i) => ({ documentId: p.documentId, order: i })),
-      categories: tree.parents.flatMap((p) =>
-        p.children.map((c, i) => ({ documentId: c.documentId, order: i, parentDocumentId: p.documentId })),
-      ),
-      // Sản phẩm bên trong danh mục mồ côi vẫn cần lưu được thứ tự/danh mục —
-      // reorder chỉ cần categoryDocumentId hợp lệ, không đòi category đó phải
-      // có cha. Danh mục mồ côi chỉ vào payload `categories` sau khi được gán
-      // cha (lúc đó nó đã nằm trong `tree.parents[].children`).
-      products: allCategoriesFlat.flatMap((c) =>
-        c.products.map((pr, i) => ({ documentId: pr.documentId, order: i, categoryDocumentId: c.documentId })),
-      ),
-    };
-  }, [tree]);
+    if (!tree || !original) return {};
+
+    const origParentIndex = new Map(original.parents.map((p, i) => [p.documentId, i]));
+    const parents: NonNullable<ReorderPayload["parents"]> = [];
+    tree.parents.forEach((p, i) => {
+      if (origParentIndex.get(p.documentId) !== i) parents.push({ documentId: p.documentId, order: i });
+    });
+
+    const origCatLoc = categoryLocations(original);
+    const categories: NonNullable<ReorderPayload["categories"]> = [];
+    for (const p of tree.parents) {
+      p.children.forEach((c, i) => {
+        const prev = origCatLoc.get(c.documentId);
+        if (!prev || prev.containerId !== p.documentId || prev.index !== i) {
+          categories.push({ documentId: c.documentId, order: i, parentDocumentId: p.documentId });
+        }
+      });
+    }
+
+    // Sản phẩm bên trong danh mục mồ côi vẫn cần lưu được thứ tự/danh mục —
+    // reorder chỉ cần categoryDocumentId hợp lệ, không đòi category đó phải
+    // có cha. Danh mục mồ côi chỉ vào payload `categories` sau khi được gán
+    // cha (lúc đó nó đã nằm trong `tree.parents[].children`).
+    const origProdLoc = productLocations(original);
+    const allCategoriesFlat = [...tree.parents.flatMap((p) => p.children), ...tree.orphanCategories];
+    const products: NonNullable<ReorderPayload["products"]> = [];
+    for (const c of allCategoriesFlat) {
+      c.products.forEach((pr, i) => {
+        const prev = origProdLoc.get(pr.documentId);
+        if (!prev || prev.containerId !== c.documentId || prev.index !== i) {
+          products.push({ documentId: pr.documentId, order: i, categoryDocumentId: c.documentId });
+        }
+      });
+    }
+
+    return { parents, categories, products };
+  }, [tree, original]);
+
+  const changeCount =
+    (payload.parents?.length ?? 0) + (payload.categories?.length ?? 0) + (payload.products?.length ?? 0);
 
   const onSave = async () => {
+    if (!tree) return;
+    if (changeCount === 0) {
+      setMessage("Không có thay đổi nào để lưu.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await saveOrder(payload);
+      // Cây vừa gửi đã là trạng thái mới trên server — chốt nó thành baseline
+      // mới (Important 2, fix round 1). Không làm bước này thì banner cảnh
+      // báo URL vẫn diff với baseline CŨ và tiếp tục hiện "sẽ đổi khi bạn lưu"
+      // cho một thay đổi đã lưu xong rồi.
+      setOriginal(structuredClone(tree));
       setDirty(false);
       setMessage(res.revalidated ? "Đã lưu và cập nhật lên website." : "Đã lưu. Website có thể mất tới 1 tiếng để cập nhật.");
     } catch (err: any) {
@@ -281,8 +375,15 @@ export default function SortPage() {
         {cat.products.map((prod) => (
           <Row key={prod.documentId} id={prod.documentId} label={prod.title} depth={2}>
             <div style={{ paddingLeft: 72, marginBottom: 4, display: "flex", gap: 8, alignItems: "center" }}>
-              <label style={{ fontSize: 12, color: "#666687" }}>Thuộc danh mục:</label>
-              <select value={cat.documentId} onChange={(e) => moveProduct(prod.documentId, e.target.value)}>
+              <label htmlFor={`prod-cat-${prod.documentId}`} style={{ fontSize: 12, color: "#666687" }}>
+                Thuộc danh mục:
+              </label>
+              <select
+                id={`prod-cat-${prod.documentId}`}
+                aria-label={`Đổi danh mục cho ${prod.title}`}
+                value={cat.documentId}
+                onChange={(e) => moveProduct(prod.documentId, e.target.value)}
+              >
                 {allCategories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.title}
@@ -338,7 +439,19 @@ export default function SortPage() {
         <button onClick={() => void load()} disabled={saving} style={{ padding: "8px 16px", background: "#fff", border: "1px solid #dcdce4", borderRadius: 4 }}>
           Hoàn tác
         </button>
-        {message && <span style={{ color: message.startsWith("Lưu thất bại") ? "#d02b20" : "#328048" }}>{message}</span>}
+        {message && (
+          <span
+            style={{
+              color: message.startsWith("Lưu thất bại")
+                ? "#d02b20"
+                : message.startsWith("Không có thay đổi")
+                  ? "#666687"
+                  : "#328048",
+            }}
+          >
+            {message}
+          </span>
+        )}
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, "parents")}>
@@ -354,8 +467,15 @@ export default function SortPage() {
                     {parent.children.map((cat) => (
                       <Row key={cat.documentId} id={cat.documentId} label={cat.title} depth={1}>
                         <div style={{ paddingLeft: 48, marginBottom: 4, display: "flex", gap: 8, alignItems: "center" }}>
-                          <label style={{ fontSize: 12, color: "#666687" }}>Thuộc:</label>
-                          <select value={parent.documentId} onChange={(e) => moveCategory(cat.documentId, e.target.value)}>
+                          <label htmlFor={`cat-parent-${cat.documentId}`} style={{ fontSize: 12, color: "#666687" }}>
+                            Thuộc:
+                          </label>
+                          <select
+                            id={`cat-parent-${cat.documentId}`}
+                            aria-label={`Đổi danh mục cha cho ${cat.title}`}
+                            value={parent.documentId}
+                            onChange={(e) => moveCategory(cat.documentId, e.target.value)}
+                          >
                             {allParents.map((p) => (
                               <option key={p.id} value={p.id}>
                                 {p.title}
@@ -380,29 +500,37 @@ export default function SortPage() {
       {tree.orphanCategories.length > 0 && (
         <div style={{ marginTop: 24, padding: 16, border: "1px solid #f5c0b8", borderRadius: 4, background: "#fcecea" }}>
           <strong>{tree.orphanCategories.length} danh mục con chưa gán cha</strong>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, "orphan-categories")}>
-            <SortableContext items={tree.orphanCategories.map((c) => c.documentId)} strategy={verticalListSortingStrategy}>
-              {tree.orphanCategories.map((cat) => (
-                <Row key={cat.documentId} id={cat.documentId} label={cat.title} depth={0}>
-                  <div style={{ paddingLeft: 24, marginBottom: 4, display: "flex", gap: 8, alignItems: "center" }}>
-                    <label style={{ fontSize: 12, color: "#666687" }}>Gán vào cha:</label>
-                    <select defaultValue="" onChange={(e) => e.target.value && moveCategory(cat.documentId, e.target.value)}>
-                      <option value="">— Chọn danh mục cha —</option>
-                      {allParents.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.title}
-                        </option>
-                      ))}
-                    </select>
-                    <button onClick={() => toggle(cat.documentId)} style={{ background: "none", border: 0, color: "#4945ff", cursor: "pointer" }}>
-                      {expanded.has(cat.documentId) ? "Thu gọn" : `Mở (${cat.products.length} sản phẩm)`}
-                    </button>
-                  </div>
-                  {expanded.has(cat.documentId) && renderProducts(cat)}
-                </Row>
-              ))}
-            </SortableContext>
-          </DndContext>
+          {/* Không cho kéo trong khối này (fix round 1, Minor): danh mục mồ
+              côi không có cha thật để gửi `parentDocumentId`, nên payload
+              luôn bỏ qua thứ tự kéo ở đây — kéo mà không lưu được là một thao
+              tác giả vờ thành công. Gán cha bằng select rồi mới sắp xếp được
+              trong nhóm cha đó. */}
+          {tree.orphanCategories.map((cat) => (
+            <StaticRow key={cat.documentId} label={cat.title} depth={0}>
+              <div style={{ paddingLeft: 24, marginBottom: 4, display: "flex", gap: 8, alignItems: "center" }}>
+                <label htmlFor={`orphan-cat-parent-${cat.documentId}`} style={{ fontSize: 12, color: "#666687" }}>
+                  Gán vào cha:
+                </label>
+                <select
+                  id={`orphan-cat-parent-${cat.documentId}`}
+                  aria-label={`Gán danh mục cha cho ${cat.title}`}
+                  defaultValue=""
+                  onChange={(e) => e.target.value && moveCategory(cat.documentId, e.target.value)}
+                >
+                  <option value="">— Chọn danh mục cha —</option>
+                  {allParents.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={() => toggle(cat.documentId)} style={{ background: "none", border: 0, color: "#4945ff", cursor: "pointer" }}>
+                  {expanded.has(cat.documentId) ? "Thu gọn" : `Mở (${cat.products.length} sản phẩm)`}
+                </button>
+              </div>
+              {expanded.has(cat.documentId) && renderProducts(cat)}
+            </StaticRow>
+          ))}
         </div>
       )}
 
@@ -412,7 +540,11 @@ export default function SortPage() {
           {tree.orphanProducts.map((p) => (
             <div key={p.documentId} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
               <span>{p.title}</span>
-              <select defaultValue="" onChange={(e) => e.target.value && moveProduct(p.documentId, e.target.value)}>
+              <select
+                aria-label={`Chọn danh mục cho ${p.title}`}
+                defaultValue=""
+                onChange={(e) => e.target.value && moveProduct(p.documentId, e.target.value)}
+              >
                 <option value="">— Chọn danh mục —</option>
                 {allCategories.map((c) => (
                   <option key={c.id} value={c.id}>
