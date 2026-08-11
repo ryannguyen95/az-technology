@@ -12,6 +12,12 @@ module.exports = {
         handler: "controller.tree",
         config: { policies: [] },
       },
+      {
+        method: "PUT",
+        path: "/reorder",
+        handler: "controller.reorder",
+        config: { policies: [] },
+      },
     ],
   },
 };
