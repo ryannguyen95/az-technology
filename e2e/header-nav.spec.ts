@@ -74,11 +74,12 @@ test.describe("Thanh nav danh mục", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
 
-    // Scope vào topbar (data-testid="topbar") vì trang chủ còn có nút Zalo nổi
-    // (FloatingButtons, accessible name cũng là "Chat Zalo") — getByRole không
-    // scope sẽ dính strict-mode violation do match cả hai.
-    const topbar = page.getByTestId("topbar");
-    const zalo = topbar.getByRole("link", { name: "Chat Zalo" });
+    // Accessible name của anchor topbar là "Zalo" (text hiển thị — Icon render
+    // svg aria-hidden nên không góp vào accessible name). Trang chủ còn nút Zalo
+    // nổi (FloatingButtons, accessible name "Chat Zalo" từ title) — `exact: true`
+    // đảm bảo "Zalo" không khớp "Chat Zalo", nên không cần scope theo class/testid.
+    const zalo = page.getByRole("link", { name: "Zalo", exact: true });
+    await expect(zalo).toHaveCount(1);
     await expect(zalo).toBeVisible();
     await expect(zalo).toHaveAttribute("href", /zalo\.me/);
     await expect(zalo).toHaveAttribute("target", "_blank");
