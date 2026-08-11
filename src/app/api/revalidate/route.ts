@@ -1,0 +1,55 @@
+import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+
+// On-demand revalidation cho mọi thay đổi từ CMS (Strapi webhook + plugin
+// sort-manager gọi trực tiếp). Không có route này, thay đổi phải chờ hết
+// `revalidate = 3600` của từng page mới lên site.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+// Hai dạng payload được chấp nhận:
+//  1. Của ta   — { tags, paths }: plugin sort-manager gọi trực tiếp.
+//  2. Của Strapi — { model, event, ... }: webhook gửi, ta tự map model → tag.
+type Payload = { tags?: string[]; paths?: string[]; model?: string };
+
+// Tên tag phải khớp đúng tag truyền vào sFetch() ở src/lib/data/strapi.ts.
+const MODEL_TAGS: Record<string, string[]> = {
+  "parent-category": ["parent-categories", "categories", "products"],
+  category: ["categories", "products"],
+  product: ["products"],
+  banner: ["banners"],
+  brand: ["products"],
+  "site-setting": ["site-setting"],
+  "home-page": ["home-page"],
+};
+
+export async function POST(req: Request) {
+  const secret = process.env.REVALIDATE_SECRET;
+  if (!secret) {
+    return NextResponse.json({ error: "REVALIDATE_SECRET is not configured" }, { status: 500 });
+  }
+  if (req.headers.get("x-revalidate-secret") !== secret) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  let body: Payload;
+  try {
+    body = (await req.json()) as Payload;
+  } catch {
+    return NextResponse.json({ error: "invalid json body" }, { status: 400 });
+  }
+
+  const explicit = Array.isArray(body.tags) ? body.tags.filter((t) => typeof t === "string" && t.length > 0) : [];
+  const fromModel = typeof body.model === "string" ? (MODEL_TAGS[body.model] ?? []) : [];
+  const tags = [...new Set([...explicit, ...fromModel])];
+  const paths = Array.isArray(body.paths) ? body.paths.filter((p) => typeof p === "string" && p.startsWith("/")) : [];
+
+  if (!tags.length && !paths.length) {
+    return NextResponse.json({ error: "nothing to revalidate: unknown model and no tags/paths given" }, { status: 400 });
+  }
+
+  for (const t of tags) revalidateTag(t);
+  for (const p of paths) revalidatePath(p);
+
+  return NextResponse.json({ revalidated: true, tags: tags.length, paths: paths.length });
+}
