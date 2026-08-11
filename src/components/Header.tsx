@@ -179,7 +179,7 @@ export function Header({ nav }: { nav: MegaItem[] }) {
   return (
     <header className="sticky top-0 z-[100]">
       {/* Topbar */}
-      <div className="az-grad-navy text-white text-[13px] hidden sm:block">
+      <div data-testid="topbar" className="az-grad-navy text-white text-[13px] hidden sm:block">
         <div className="max-w-site mx-auto px-4 flex items-center justify-between h-9">
           <div className="flex items-center gap-5">
             <a href={`tel:${tel}`} className="flex items-center gap-1.5 hover:text-cyan-300 transition-colors font-semibold whitespace-nowrap">
@@ -190,9 +190,17 @@ export function Header({ nav }: { nav: MegaItem[] }) {
             </a>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => openQuote({ mode: "callback" })} className="flex items-center gap-1.5 hover:text-cyan-300 transition-colors">
-              <Icon name="zalo" className="w-3.5 h-3.5" /> Zalo
-            </button>
+            {settings.zaloUrl && (
+              <a
+                href={settings.zaloUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat Zalo"
+                className="flex items-center gap-1.5 hover:text-cyan-300 transition-colors"
+              >
+                <Icon name="zalo" className="w-3.5 h-3.5" /> Zalo
+              </a>
+            )}
             <a href="/lien-he#map" className="hidden md:flex items-center gap-1.5 hover:text-cyan-300 transition-colors">
               <Icon name="location" className="w-3.5 h-3.5" /> Bản đồ
             </a>

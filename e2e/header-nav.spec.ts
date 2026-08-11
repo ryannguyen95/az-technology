@@ -69,4 +69,18 @@ test.describe("Thanh nav danh mục", () => {
     await homeLinkInDrawer.focus();
     await expect(homeLinkInDrawer).toBeFocused();
   });
+
+  test("topbar: nút Zalo mở link Zalo từ CMS, không mở modal", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+
+    // Scope vào topbar (data-testid="topbar") vì trang chủ còn có nút Zalo nổi
+    // (FloatingButtons, accessible name cũng là "Chat Zalo") — getByRole không
+    // scope sẽ dính strict-mode violation do match cả hai.
+    const topbar = page.getByTestId("topbar");
+    const zalo = topbar.getByRole("link", { name: "Chat Zalo" });
+    await expect(zalo).toBeVisible();
+    await expect(zalo).toHaveAttribute("href", /zalo\.me/);
+    await expect(zalo).toHaveAttribute("target", "_blank");
+  });
 });
