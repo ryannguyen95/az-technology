@@ -1,0 +1,11 @@
+{
+  "name": "sort-manager",
+  "version": "0.1.0",
+  "description": "Kéo thả sắp xếp Danh mục cha / Danh mục con / Sản phẩm",
+  "strapi": {
+    "name": "sort-manager",
+    "displayName": "Sắp xếp",
+    "description": "Sắp xếp thứ tự và chuyển danh mục bằng kéo thả",
+    "kind": "plugin"
+  }
+}
