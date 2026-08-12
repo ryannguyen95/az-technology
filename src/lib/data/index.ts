@@ -33,8 +33,20 @@ export async function getEntriesByKind(kind: EntryKind): Promise<CatalogEntry[]>
   return (await getAllEntries()).filter((e) => e.kind === kind);
 }
 
+// Falls back to an empty list if the CMS call fails — e.g. `populate[imageMobile]`
+// 400s on a Strapi instance that hasn't been migrated/restarted yet after this
+// field shipped (verified against a real Strapi: an unknown populate key is a
+// ValidationError, not a silent no-op). Without this, a stale CMS process takes
+// the whole homepage down instead of just rendering without banners. Same shape
+// as `getSettings()` below for consistency.
 export async function getBanners(): Promise<HeroBanner[]> {
-  return USE_STRAPI ? strapi.getBanners() : [];
+  if (!USE_STRAPI) return [];
+  try {
+    return await strapi.getBanners();
+  } catch (err) {
+    console.error("[data] getBanners failed, falling back to no banners:", err);
+    return [];
+  }
 }
 
 // Site settings: live from the CMS (strapi mode), with the static `settings`
