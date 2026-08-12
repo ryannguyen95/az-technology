@@ -5,14 +5,14 @@
       "name": "az-web",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
-      "port": 3014
+      "port": 3004
     },
     {
       "name": "strapi",
       "runtimeExecutable": "/Users/nguyendinhphuc/.nvm/versions/node/v22.20.0/bin/node",
       "runtimeArgs": ["node_modules/@strapi/strapi/bin/strapi.js", "develop"],
-      "cwd": "/Users/nguyendinhphuc/Documents/Rynex/projects/az-technology/.claude/worktrees/subcategory-items-display-3a9541/cms",
-      "port": 1347
+      "cwd": "/Users/nguyendinhphuc/Documents/Rynex/projects/az-technology/cms",
+      "port": 1337
     }
   ]
 }
