@@ -25,37 +25,72 @@ import {
   type ReorderPayload,
 } from "../api";
 
-// Slug danh mục CHA quyết định prefix URL của danh mục con và sản phẩm bên trong.
-// Nguồn: src/lib/data/strapi.ts TOP_KIND + src/lib/routing.ts KIND_PREFIX.
-// Hai cây phải khớp nhau — đổi một bên thì đổi cả bên kia.
+// Slug danh mục CHA quyết định prefix URL của SẢN PHẨM bên trong (qua TOP_KIND
+// ở src/lib/data/strapi.ts, walk lên tới danh mục cha rồi tra KIND_PREFIX ở
+// src/lib/routing.ts). Danh mục CON thì KHÔNG — mọi danh mục con luôn ra
+// `/danh-muc/<slug>` bất kể cha là gì (strapi.ts gán cứng `kind: "category"`
+// cho mọi danh mục con, và KIND_PREFIX.category = "/danh-muc"). Ba cái này
+// (PARENT_SLUG_PREFIX, TOP_KIND, KIND_PREFIX) phải khớp nhau — đổi một bên thì
+// đổi cả các bên còn lại.
 const PARENT_SLUG_PREFIX: Record<string, string> = {
   "phan-mem": "/san-pham",
   "phan-cung": "/san-pham",
   "dich-vu-it": "/dich-vu",
   "giai-phap": "/giai-phap",
 };
+// Fallback đúng bằng `TOP_KIND[...] ?? "product"` ở strapi.ts (rồi
+// KIND_PREFIX.product = "/san-pham") — dùng khi cha là slug lạ không có trong
+// bảng trên, hoặc khi sản phẩm/danh mục không có cha (mồ côi). KHÔNG được bỏ
+// qua (continue) những trường hợp này — url thật của chúng vẫn là
+// "/san-pham", im lặng bỏ qua sẽ lại bịa ra chuyện "không đổi" trong khi nó
+// đổi thật.
+const DEFAULT_PRODUCT_PREFIX = "/san-pham";
 
 type UrlChange = { title: string; from: string; to: string };
 
-// So cây gốc (vừa tải) với cây đang sửa, liệt kê mọi URL đổi prefix.
+// Prefix URL của TỪNG SẢN PHẨM trong cây, suy từ danh mục cha của danh mục
+// chứa nó (không phải từ chính danh mục — xem ghi chú PARENT_SLUG_PREFIX).
+function productPrefixMap(tree: TreeResponse): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const p of tree.parents) {
+    const prefix = PARENT_SLUG_PREFIX[p.slug] ?? DEFAULT_PRODUCT_PREFIX;
+    for (const cat of p.children) {
+      for (const prod of cat.products) map.set(prod.documentId, prefix);
+    }
+  }
+  // Danh mục mồ côi (chưa gán cha) và sản phẩm mồ côi (chưa có danh mục) đều
+  // rơi vào fallback "product" ở `topOf()`/TOP_KIND của strapi.ts.
+  for (const cat of tree.orphanCategories) {
+    for (const prod of cat.products) map.set(prod.documentId, DEFAULT_PRODUCT_PREFIX);
+  }
+  for (const prod of tree.orphanProducts) map.set(prod.documentId, DEFAULT_PRODUCT_PREFIX);
+  return map;
+}
+
+function allProductNodes(tree: TreeResponse): TreeNode[] {
+  return [
+    ...tree.parents.flatMap((p) => p.children.flatMap((c) => c.products)),
+    ...tree.orphanCategories.flatMap((c) => c.products),
+    ...tree.orphanProducts,
+  ];
+}
+
+// So cây gốc (vừa tải) với cây đang sửa, liệt kê mọi URL SẢN PHẨM đổi prefix.
+// Cố ý tính ở cấp sản phẩm, không phải cấp danh mục: URL danh mục con không
+// bao giờ đổi (luôn `/danh-muc/<slug>`), nên báo "danh mục X sẽ đổi URL" là
+// bịa. Tính theo tổ tiên cấp cha của MỖI sản phẩm thì bắt được cả hai đường
+// đổi URL thật: (a) chuyển thẳng một sản phẩm sang danh mục khác nhóm, và (b)
+// chuyển cả danh mục (kéo theo mọi sản phẩm trong đó) sang cha khác nhóm.
 function diffUrls(before: TreeResponse, after: TreeResponse): UrlChange[] {
-  const prefixOf = (tree: TreeResponse, categoryId: string): string | undefined => {
-    const parent = tree.parents.find((p) => p.children.some((c) => c.documentId === categoryId));
-    return parent ? PARENT_SLUG_PREFIX[parent.slug] : undefined;
-  };
+  const beforePrefix = productPrefixMap(before);
+  const afterPrefix = productPrefixMap(after);
 
   const changes: UrlChange[] = [];
-  for (const p of after.parents) {
-    for (const cat of p.children) {
-      const oldPrefix = prefixOf(before, cat.documentId);
-      const newPrefix = PARENT_SLUG_PREFIX[p.slug];
-      if (!oldPrefix || !newPrefix || oldPrefix === newPrefix) continue;
-
-      changes.push({ title: cat.title, from: `${oldPrefix}/${cat.slug}`, to: `${newPrefix}/${cat.slug}` });
-      for (const prod of cat.products) {
-        changes.push({ title: prod.title, from: `${oldPrefix}/${prod.slug}`, to: `${newPrefix}/${prod.slug}` });
-      }
-    }
+  for (const prod of allProductNodes(after)) {
+    const oldPrefix = beforePrefix.get(prod.documentId);
+    const newPrefix = afterPrefix.get(prod.documentId);
+    if (!oldPrefix || !newPrefix || oldPrefix === newPrefix) continue;
+    changes.push({ title: prod.title, from: `${oldPrefix}/${prod.slug}`, to: `${newPrefix}/${prod.slug}` });
   }
   return changes;
 }
@@ -434,9 +469,11 @@ export default function SortPage() {
 
       {urlChanges.length > 0 && (
         <div style={{ marginBottom: 16, padding: 16, border: "1px solid #f5c0b8", borderRadius: 4, background: "#fcecea" }}>
-          <strong>⚠️ {urlChanges.length} đường dẫn sẽ đổi khi bạn lưu</strong>
+          <strong>⚠️ {urlChanges.length} đường dẫn sản phẩm sẽ đổi khi bạn lưu</strong>
           <p style={{ margin: "4px 0 8px", color: "#666687" }}>
             Đường dẫn cũ sẽ trả lỗi 404 và mất thứ hạng tìm kiếm đã có. Không có chuyển hướng tự động.
+            Đường dẫn danh mục (<code>/danh-muc/…</code>) không đổi theo danh mục cha — chỉ sản phẩm
+            bên trong mới đổi URL khi danh mục chứa nó chuyển sang nhóm khác.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20, maxHeight: 200, overflowY: "auto" }}>
             {urlChanges.map((c) => (
