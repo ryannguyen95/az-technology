@@ -34,13 +34,12 @@ yarn build
 
 ## 🧪 Tests
 
-No test runner is installed in this package. Plugin-level regression tests
-are plain Node scripts (assert-only, zero extra deps) run directly with
-`node`:
-
-```
-node src/plugins/sort-manager/server/src/services/tree.test.js
-```
+No test runner is installed in this package, and no plugin-level test
+scripts currently live here (the previous sort-manager plugin — and its
+`node`-run regression tests — was replaced by native Strapi relation
+reordering). End-to-end coverage for the catalog (including relation order)
+lives in the frontend package instead: `bun run test:e2e:seed` and
+`STRAPI_URL=... bun run test:e2e:strapi` at the repo root.
 
 ## ⚙️ Deployment
 

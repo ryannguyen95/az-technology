@@ -69,31 +69,35 @@ pm2 list
 - Port không thông → kiểm firewall: `ufw status` — mở 80 và 1337 nếu ufw active.
 - Secret (`.env.*`, `cms/.env.*`, `deploy/.env.*`, `*.pem`, `*.pem.pub`) đều gitignored.
 
-## Sort-manager revalidation webhook (manual per-environment setup)
+## Content-edit revalidation webhook (manual per-environment setup)
 
-The sort-manager plugin (`cms/src/plugins/sort-manager/server/src/services/reorder.js`)
-calls the frontend's `/api/revalidate` directly after every save, using two env
-vars read on the CMS side: `WEB_URL` (base URL of the web app) and
-`REVALIDATE_SECRET` (must match the same value configured on the web app —
-see `src/app/api/revalidate/route.ts`). If either is missing, the call
-silently no-ops and the admin falls back to "may take up to an hour to
-update" for every save.
+Category/product/parent-category order is now reordered via native Strapi
+relations (drag-and-drop on the Relations field in the admin), not a custom
+plugin. Every other content edit (create/update/delete/publish) still needs
+to reach the frontend's `/api/revalidate` to show up before the page's
+`revalidate = 3600` ISR window expires — and that wiring is **entirely
+manual, configured once per environment through the Strapi admin UI**, not
+through env vars:
 
-These two vars are **not tracked in git** — they live in the gitignored
-`cms/.env.<env>` file that `deploy.sh` copies to the server as `cms/.env`, so
-adding them to `cms/.env.example` does **not** propagate to an
-already-deployed environment. Set them by hand whenever provisioning or
-rotating secrets for `staging`/`prod`:
+1. In the CMS admin, go to **Settings → Webhooks → Create new webhook**.
+2. URL: `<web base URL>/api/revalidate` (e.g. `http://167.86.107.70/api/revalidate`
+   for staging).
+3. Headers: `x-revalidate-secret` = the same value as the web app's
+   `REVALIDATE_SECRET` (root `.env.<env>`).
+4. Events: select the content types to watch (Entry create/update/delete/
+   publish/unpublish) for parent-category, category, product, brand, banner,
+   site-setting, home-page.
+5. Save, then trigger a test event (e.g. edit and save any entry) and confirm
+   the webhook shows a `200` in its delivery log.
 
-1. Open `cms/.env.<env>` (create from `cms/.env.example` if it doesn't exist yet).
-2. Set `WEB_URL` to the environment's public web URL (e.g. `http://167.86.107.70`
-   for staging, or the prod domain once it exists).
-3. Set `REVALIDATE_SECRET` to the **same value** already configured in
-   `.env.<env>` (root, web runtime) for that environment. Generate a fresh
-   random value once per environment if one doesn't exist yet, then copy it
-   into both files — they must match exactly.
-4. Redeploy (`bash deploy/deploy.sh <env>`) or `pm2 restart az-cms` if the
-   files were edited directly on the server.
-5. Verify: save a reorder in `/admin/plugins/sort-manager` and confirm the
-   success message says "Đã lưu và cập nhật lên website." rather than the
-   "may take up to an hour" fallback.
+`WEB_URL` / `REVALIDATE_SECRET` still exist as **CMS-side** env vars
+(`cms/.env.<env>`), but they're used for a narrower purpose now: the
+relation-order backfill that runs on every Strapi boot (`cms/src/index.ts`)
+calls `/api/revalidate` once, right after it fills in any NULL
+category/product relation-order link, so the corrected order shows up
+immediately instead of waiting on ISR. If either var is missing, the backfill
+still runs (the DB is the source of truth either way) — only that one
+revalidate call is skipped, logged as a warning. Set them the same way as any
+other CMS runtime secret: in the gitignored `cms/.env.<env>` file (see the
+`## Env theo môi trường` section above), matching the same
+`REVALIDATE_SECRET` value used for the webhook in step 3.
