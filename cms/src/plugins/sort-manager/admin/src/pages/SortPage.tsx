@@ -169,6 +169,10 @@ export default function SortPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  // Trong lúc `saving`, không sensor nào được kích hoạt kéo — DndContext
+  // nhận mảng rỗng thì không còn cách nào bắt đầu một thao tác kéo (Major,
+  // fix round 2). Xem ghi chú đầy đủ ở `onSave`/`onDragEnd`.
+  const dndSensors = saving ? [] : sensors;
 
   const load = async () => {
     try {
@@ -205,7 +209,13 @@ export default function SortPage() {
   // drop target) và không cần thiết cho thao tác hằng ngày.
   const onDragEnd = (event: DragEndEvent, listId: string) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !tree) return;
+    // Chặn mọi chỉnh sửa trong lúc một lần lưu đang bay (Major, fix round 2):
+    // `onSave` là closure async bắt `tree` tại thời điểm gọi — sửa cây trong
+    // lúc `await saveOrder()` chưa xong làm mất đúng phần sửa đó (không nằm
+    // trong payload đang gửi, rồi bị `setOriginal`/`setDirty(false)` của lần
+    // lưu đó ghi đè lên, dập luôn cả `beforeunload` đang bảo vệ nó). `sensors`
+    // đã bị rút hết khi `saving` nên nhánh này chủ yếu là phòng thủ kép.
+    if (saving || !over || active.id === over.id || !tree) return;
     setTree((prev) => {
       if (!prev) return prev;
       const next = structuredClone(prev) as TreeResponse;
@@ -229,6 +239,8 @@ export default function SortPage() {
   };
 
   const moveCategory = (categoryId: string, toParentId: string) => {
+    // Cùng lý do với `onDragEnd` ở trên — chặn khi đang lưu (Major, fix round 2).
+    if (saving) return;
     setTree((prev) => {
       if (!prev) return prev;
       const next = structuredClone(prev) as TreeResponse;
@@ -251,6 +263,8 @@ export default function SortPage() {
   };
 
   const moveProduct = (productId: string, toCategoryId: string) => {
+    // Cùng lý do với `onDragEnd` ở trên — chặn khi đang lưu (Major, fix round 2).
+    if (saving) return;
     setTree((prev) => {
       if (!prev) return prev;
       const next = structuredClone(prev) as TreeResponse;
@@ -325,7 +339,11 @@ export default function SortPage() {
   const onSave = async () => {
     if (!tree) return;
     if (changeCount === 0) {
+      // Không có gì để gửi (vd kéo đi rồi kéo về chỗ cũ) — dọn luôn `dirty`
+      // thay vì để nút Lưu tiếp tục sáng và `beforeunload` tiếp tục armed cho
+      // một thay đổi không còn tồn tại (Minor, fix round 2).
       setMessage("Không có thay đổi nào để lưu.");
+      setDirty(false);
       return;
     }
     setSaving(true);
@@ -335,6 +353,15 @@ export default function SortPage() {
       // mới (Important 2, fix round 1). Không làm bước này thì banner cảnh
       // báo URL vẫn diff với baseline CŨ và tiếp tục hiện "sẽ đổi khi bạn lưu"
       // cho một thay đổi đã lưu xong rồi.
+      //
+      // `tree` ở đây là closure bắt tại lần render tạo ra `onSave` này. An
+      // toàn để dùng trực tiếp (không cần chụp snapshot riêng) CHỈ VÌ
+      // `onDragEnd`/`moveCategory`/`moveProduct` đều tự chặn khi `saving`
+      // (xem các hàm đó) — nên không có sửa đổi nào xen được vào giữa lúc
+      // `await saveOrder(payload)` đang bay. Bỏ khoá đó đi thì dòng này sẽ
+      // chốt nhầm baseline vào một `tree` đã cũ so với những gì người dùng
+      // vừa sửa thêm (Major, fix round 2 — leader race: sửa cây trong lúc
+      // save bay làm mất việc chưa lưu VÀ tắt luôn `beforeunload`).
       setOriginal(structuredClone(tree));
       setDirty(false);
       setMessage(res.revalidated ? "Đã lưu và cập nhật lên website." : "Đã lưu. Website có thể mất tới 1 tiếng để cập nhật.");
@@ -370,7 +397,7 @@ export default function SortPage() {
   ];
 
   const renderProducts = (cat: CategoryNode) => (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, `category:${cat.documentId}`)}>
+    <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, `category:${cat.documentId}`)}>
       <SortableContext items={cat.products.map((p) => p.documentId)} strategy={verticalListSortingStrategy}>
         {cat.products.map((prod) => (
           <Row key={prod.documentId} id={prod.documentId} label={prod.title} depth={2}>
@@ -382,6 +409,7 @@ export default function SortPage() {
                 id={`prod-cat-${prod.documentId}`}
                 aria-label={`Đổi danh mục cho ${prod.title}`}
                 value={cat.documentId}
+                disabled={saving}
                 onChange={(e) => moveProduct(prod.documentId, e.target.value)}
               >
                 {allCategories.map((c) => (
@@ -454,7 +482,7 @@ export default function SortPage() {
         )}
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, "parents")}>
+      <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, "parents")}>
         <SortableContext items={tree.parents.map((p) => p.documentId)} strategy={verticalListSortingStrategy}>
           {tree.parents.map((parent) => (
             <Row key={parent.documentId} id={parent.documentId} label={`${expanded.has(parent.documentId) ? "▾" : "▸"} ${parent.title}`} depth={0}>
@@ -462,7 +490,7 @@ export default function SortPage() {
                 {expanded.has(parent.documentId) ? "Thu gọn" : `Mở (${parent.children.length} danh mục con)`}
               </button>
               {expanded.has(parent.documentId) && (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, `parent:${parent.documentId}`)}>
+                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(e, `parent:${parent.documentId}`)}>
                   <SortableContext items={parent.children.map((c) => c.documentId)} strategy={verticalListSortingStrategy}>
                     {parent.children.map((cat) => (
                       <Row key={cat.documentId} id={cat.documentId} label={cat.title} depth={1}>
@@ -474,6 +502,7 @@ export default function SortPage() {
                             id={`cat-parent-${cat.documentId}`}
                             aria-label={`Đổi danh mục cha cho ${cat.title}`}
                             value={parent.documentId}
+                            disabled={saving}
                             onChange={(e) => moveCategory(cat.documentId, e.target.value)}
                           >
                             {allParents.map((p) => (
@@ -515,6 +544,7 @@ export default function SortPage() {
                   id={`orphan-cat-parent-${cat.documentId}`}
                   aria-label={`Gán danh mục cha cho ${cat.title}`}
                   defaultValue=""
+                  disabled={saving}
                   onChange={(e) => e.target.value && moveCategory(cat.documentId, e.target.value)}
                 >
                   <option value="">— Chọn danh mục cha —</option>
@@ -543,6 +573,7 @@ export default function SortPage() {
               <select
                 aria-label={`Chọn danh mục cho ${p.title}`}
                 defaultValue=""
+                disabled={saving}
                 onChange={(e) => e.target.value && moveProduct(p.documentId, e.target.value)}
               >
                 <option value="">— Chọn danh mục —</option>
