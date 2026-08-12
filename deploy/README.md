@@ -68,3 +68,32 @@ pm2 list
 - First CMS boot seeds catalog + nhãn admin tiếng Việt (SQLite).
 - Port không thông → kiểm firewall: `ufw status` — mở 80 và 1337 nếu ufw active.
 - Secret (`.env.*`, `cms/.env.*`, `deploy/.env.*`, `*.pem`, `*.pem.pub`) đều gitignored.
+
+## Sort-manager revalidation webhook (manual per-environment setup)
+
+The sort-manager plugin (`cms/src/plugins/sort-manager/server/src/services/reorder.js`)
+calls the frontend's `/api/revalidate` directly after every save, using two env
+vars read on the CMS side: `WEB_URL` (base URL of the web app) and
+`REVALIDATE_SECRET` (must match the same value configured on the web app —
+see `src/app/api/revalidate/route.ts`). If either is missing, the call
+silently no-ops and the admin falls back to "may take up to an hour to
+update" for every save.
+
+These two vars are **not tracked in git** — they live in the gitignored
+`cms/.env.<env>` file that `deploy.sh` copies to the server as `cms/.env`, so
+adding them to `cms/.env.example` does **not** propagate to an
+already-deployed environment. Set them by hand whenever provisioning or
+rotating secrets for `staging`/`prod`:
+
+1. Open `cms/.env.<env>` (create from `cms/.env.example` if it doesn't exist yet).
+2. Set `WEB_URL` to the environment's public web URL (e.g. `http://167.86.107.70`
+   for staging, or the prod domain once it exists).
+3. Set `REVALIDATE_SECRET` to the **same value** already configured in
+   `.env.<env>` (root, web runtime) for that environment. Generate a fresh
+   random value once per environment if one doesn't exist yet, then copy it
+   into both files — they must match exactly.
+4. Redeploy (`bash deploy/deploy.sh <env>`) or `pm2 restart az-cms` if the
+   files were edited directly on the server.
+5. Verify: save a reorder in `/admin/plugins/sort-manager` and confirm the
+   success message says "Đã lưu và cập nhật lên website." rather than the
+   "may take up to an hour" fallback.

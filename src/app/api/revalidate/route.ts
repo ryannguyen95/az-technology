@@ -18,7 +18,7 @@ const MODEL_TAGS: Record<string, string[]> = {
   category: ["categories", "products"],
   product: ["products"],
   banner: ["banners"],
-  brand: ["products"],
+  brand: ["products", "brands"],
   "site-setting": ["site-setting"],
   "home-page": ["home-page"],
 };

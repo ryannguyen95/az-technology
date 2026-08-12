@@ -64,6 +64,11 @@ services:
       ENCRYPTION_KEY: dev-encryption-key
       # Poll the filesystem so hot reload works on bind-mounted code (esp. macOS).
       CHOKIDAR_USEPOLLING: "true"
+      # On-demand revalidation webhook (sort-manager reorder -> Next). Must
+      # match the web service's REVALIDATE_SECRET below, or revalidateWeb()
+      # silently no-ops and every save falls back to "may take up to an hour".
+      WEB_URL: http://web:3000
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
     volumes:
       - ./cms:/app          # live source for hot reload
       - cms_node_modules:/app/node_modules   # keep container's installed deps
