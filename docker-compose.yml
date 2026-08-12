@@ -64,6 +64,13 @@ services:
       ENCRYPTION_KEY: dev-encryption-key
       # Poll the filesystem so hot reload works on bind-mounted code (esp. macOS).
       CHOKIDAR_USEPOLLING: "true"
+      # Used once per boot by the relation-order backfill (cms/src/index.ts)
+      # to purge the frontend's cache right after it fills in NULL
+      # category/product relation-order links. Must match the web service's
+      # REVALIDATE_SECRET below, or the revalidate call silently no-ops (the
+      # backfill itself still runs either way).
+      WEB_URL: http://web:3000
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
     volumes:
       - ./cms:/app          # live source for hot reload
       - cms_node_modules:/app/node_modules   # keep container's installed deps

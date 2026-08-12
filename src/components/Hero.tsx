@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import { useEffect, useState } from "react";
 import type { HeroBanner } from "@/lib/types";
 import { Icon } from "./Icon";
@@ -24,6 +24,32 @@ function Placeholder({ title }: { title?: string }) {
   );
 }
 
+// Art direction: điện thoại lấy ảnh dọc riêng, desktop lấy ảnh ngang.
+// Dùng getImageProps để CẢ HAI ảnh vẫn đi qua next/image optimizer —
+// `<picture>` + `<Image>` trần sẽ khiến ảnh mobile được phục vụ nguyên gốc.
+function ArtDirected({ banner, priority }: { banner: HeroBanner; priority: boolean }) {
+  const common = { alt: banner.title, fill: true, priority, className: "object-cover" };
+  const {
+    props: { srcSet: desktopSrcSet },
+  } = getImageProps({ ...common, src: banner.image!, sizes: "(min-width: 1240px) 1240px, 100vw" });
+  const {
+    props: { srcSet: mobileSrcSet, ...rest },
+  } = getImageProps({ ...common, src: banner.imageMobile!, sizes: "100vw" });
+
+  return (
+    // `<picture>` is an inline, non-replaced element — with the child `<img fill>`
+    // taken out of flow by its own `position: absolute`, an unstyled `<picture>`
+    // collapses to a zero-size box (invisible to layout/testing tools even though
+    // the image paints fine). Give it the same absolute-fill box as the plain
+    // `<Image fill>` branch above so it has real geometry.
+    <picture className="absolute inset-0">
+      <source media="(min-width: 768px)" srcSet={desktopSrcSet} />
+      <source media="(max-width: 767px)" srcSet={mobileSrcSet} />
+      <img {...rest} alt={banner.title} />
+    </picture>
+  );
+}
+
 export function Hero({ banners }: { banners?: HeroBanner[] }) {
   // Show every banner; a missing image falls back to the placeholder above.
   const slides: HeroBanner[] = banners && banners.length
@@ -41,26 +67,40 @@ export function Hero({ banners }: { banners?: HeroBanner[] }) {
 
   const i2 = Math.min(i, slides.length - 1);
   const go = (next: number) => setI((next + slides.length) % slides.length);
+  // Chỉ đổi khung sang 4:3 trên mobile khi MỌI slide CÓ ẢNH DESKTOP đều có
+  // ảnh mobile riêng. Slide placeholder (không có `image`) không có quyền
+  // chặn khung 4:3 — nó không tham gia rotation ảnh thật nên không thể bị
+  // object-cover cắt sai. Nếu không slide nào có ảnh desktop, `.every()`
+  // trên mảng rỗng sẽ mặc định `true`; chặn riêng ca đó để không bật khung
+  // 4:3 cho một dàn toàn placeholder.
+  const slidesWithImage = slides.filter((b) => !!b.image);
+  const mobileFramed =
+    slidesWithImage.length > 0 && slidesWithImage.every((b) => !!b.imageMobile);
 
   return (
     <section className="pt-7 pb-3">
       <div className="max-w-site mx-auto px-4">
         <div
-          className="reveal group relative overflow-hidden rounded-[24px] shadow-card bg-mist select-none"
-          style={{ aspectRatio: "1920 / 640" }}
+          className={`reveal group relative overflow-hidden rounded-[24px] shadow-card bg-mist select-none ${
+            mobileFramed ? "aspect-[4/3] md:aspect-[1920/640]" : "aspect-[1920/640]"
+          }`}
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
           {slides.map((b, k) => {
             const inner = b.image ? (
-              <Image
-                src={b.image}
-                alt={b.title}
-                fill
-                priority={k === 0}
-                sizes="(min-width: 1240px) 1240px, 100vw"
-                className="object-cover"
-              />
+              b.imageMobile ? (
+                <ArtDirected banner={b} priority={k === 0} />
+              ) : (
+                <Image
+                  src={b.image}
+                  alt={b.title}
+                  fill
+                  priority={k === 0}
+                  sizes="(min-width: 1240px) 1240px, 100vw"
+                  className="object-cover"
+                />
+              )
             ) : (
               <Placeholder title={b.title} />
             );

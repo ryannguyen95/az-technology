@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
+const isDev = process.env.NODE_ENV !== "production";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -21,9 +22,22 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       // Cloudflare R2 public bucket (r2.dev dev URL or a custom domain).
       { protocol: "https", hostname: "**.r2.dev" },
-      // Local Strapi media during development.
-      { protocol: "http", hostname: "localhost", port: "1337" },
-      { protocol: "http", hostname: "127.0.0.1", port: "1337" },
+      // Local Strapi media, DEV ONLY. No `port` pinned: the main tree runs
+      // Strapi on 1337 but every worktree runs it on 1337+10n per the Port
+      // Registry's worktree rule, and a pinned port silently 500'd every image
+      // when DATA_SOURCE=strapi in a worktree.
+      //
+      // Gated behind dev on purpose. The image optimizer fetches these URLs
+      // server-side, so an unpinned loopback pattern shipped to production
+      // would turn any CMS-controlled image src into a port-probe oracle
+      // against localhost. Dev machines already run these ports; prod must not
+      // reach loopback at all.
+      ...(isDev
+        ? [
+            { protocol: "http", hostname: "localhost" },
+            { protocol: "http", hostname: "127.0.0.1" },
+          ]
+        : []),
     ],
   },
 };

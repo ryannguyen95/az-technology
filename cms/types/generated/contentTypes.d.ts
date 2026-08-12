@@ -458,6 +458,7 @@ export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
     ctaHref: Schema.Attribute.String;
     ctaLabel: Schema.Attribute.String;
     image: Schema.Attribute.Media<'images'>;
+    imageMobile: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -596,9 +597,10 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     parent: Schema.Attribute.Relation<
-      'oneToOne',
+      'manyToOne',
       'api::parent-category.parent-category'
     >;
+    products: Schema.Attribute.Relation<'oneToMany', 'api::product.product'>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'title'>;
     summary: Schema.Attribute.Text;
@@ -653,6 +655,10 @@ export interface ApiParentCategoryParentCategory
     draftAndPublish: true;
   };
   attributes: {
+    categories: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::category.category'
+    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -753,7 +759,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
   attributes: {
     badge: Schema.Attribute.String;
     brands: Schema.Attribute.Relation<'manyToMany', 'api::brand.brand'>;
-    category: Schema.Attribute.Relation<'oneToOne', 'api::category.category'>;
+    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
     coverImage: Schema.Attribute.Media<'images'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

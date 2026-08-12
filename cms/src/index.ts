@@ -6,11 +6,12 @@ import { BRANDS, CATEGORIES, HEROES, HOME_CATEGORY_LIST, HOME_SECTIONS, PARENT_C
 const VI_LABELS: Record<string, Record<string, string>> = {
   "api::parent-category.parent-category": {
     title: "Tên danh mục cha", slug: "Đường dẫn (slug)",
-    icon: "Biểu tượng", order: "Thứ tự", summary: "Tóm tắt",
+    icon: "Biểu tượng", order: "Thứ tự", summary: "Tóm tắt", categories: "Danh mục con",
   },
   "api::category.category": {
     title: "Tên danh mục con", slug: "Đường dẫn (slug)", parent: "Danh mục cha",
     icon: "Biểu tượng", order: "Thứ tự", summary: "Tóm tắt", description: "Nội dung trang danh mục",
+    products: "Sản phẩm",
   },
   "api::product.product": {
     title: "Tên sản phẩm", headline: "Tiêu đề trang chi tiết", slug: "Đường dẫn (slug)",
@@ -21,7 +22,8 @@ const VI_LABELS: Record<string, Record<string, string>> = {
   },
   "api::brand.brand": { name: "Tên thương hiệu", slug: "Đường dẫn (slug)", products: "Sản phẩm" },
   "api::banner.banner": {
-    title: "Tiêu đề", image: "Hình ảnh", ctaLabel: "Nhãn nút", ctaHref: "Liên kết nút",
+    title: "Tiêu đề", image: "Hình ảnh (desktop)", imageMobile: "Hình ảnh (mobile)",
+    ctaLabel: "Nhãn nút", ctaHref: "Liên kết nút",
     order: "Thứ tự", active: "Đang hiển thị",
   },
   "api::quote-request.quote-request": {
@@ -107,6 +109,7 @@ const CT_DESCRIPTIONS: Record<string, Record<string, string>> = {
   },
   "api::banner.banner": {
     image: "Kích thước đề xuất 1920×640 (tỉ lệ 3:1), JPG/WebP, ≤400KB. Ảnh sẽ bị cắt để lấp đầy khung — đặt nội dung/chữ quan trọng vào giữa.",
+    imageMobile: "Ảnh hiển thị trên điện thoại. Kích thước đề xuất 1200×900 (tỉ lệ 4:3), JPG/WebP, ≤300KB. Bỏ trống thì điện thoại dùng chung ảnh desktop (khung giữ tỉ lệ ngang để không bị cắt hỏng).",
   },
   "api::site-setting.site-setting": {
     logo: "Logo nền sáng (header). PNG/WebP nền trong suốt, cao ≥80px, KHÔNG dùng SVG.",
@@ -185,6 +188,163 @@ async function ensureSiteSetting(strapi: Core.Strapi) {
   if (!(await ss.findFirst())) {
     await ss.create({ data: SETTINGS, status: "published" });
     strapi.log.info("[seed] site settings created");
+  }
+}
+
+// `order` used to be the only field driving display order for categories/
+// products. Now that `category.parent` / `product.category` are manyToOne
+// relations, admin drag-and-drop reorders the relation instead, and Strapi
+// auto-generates an `_ord` column on the join table for it
+// (categories_parent_lnk.category_ord, products_category_lnk.product_ord).
+// Keep `order` as a plain field (editable) on parent-category/banner, where
+// it's still the only source of truth — no relation to reorder there.
+const HIDE_ORDER_FIELD = ["api::category.category", "api::product.product"];
+
+async function hideUnmaintainedOrderField(strapi: Core.Strapi) {
+  const ctService: any = strapi.plugin("content-manager").service("content-types");
+  for (const uid of HIDE_ORDER_FIELD) {
+    try {
+      const ct = strapi.contentType(uid as any);
+      const cfg = await ctService.findConfiguration(ct);
+      cfg.metadatas = cfg.metadatas || {};
+      const meta = cfg.metadatas.order;
+      if (!meta) continue;
+      meta.edit = { ...(meta.edit || {}), visible: false };
+      await ctService.updateConfiguration(ct, cfg);
+    } catch (err) {
+      strapi.log.warn(`[relation-order] hide order field skipped for ${uid}: ${(err as Error).message}`);
+    }
+  }
+  strapi.log.info("[relation-order] unmaintained 'order' field hidden on category/product edit forms");
+}
+
+// Relation-order backfill ----------------------------------------------------
+// Every join-table link starts with its `_ord` column NULL (new relation, or
+// a link that predates the manyToOne migration). NULL sorts inconsistently
+// across engines (SQLite: nulls first, Postgres: nulls last), so display
+// order is undefined until every link has a number.
+//
+// This runs on every boot and only ever writes rows where `_ord` is still
+// NULL, so it's both a self-healing migration (every link starts NULL right
+// after the schema change) and safe to leave running forever:
+//   - a link an editor already reordered via drag-and-drop is non-NULL and is
+//     never touched again — re-running (redeploy, restart, reseed) can't
+//     silently discard that work;
+//   - a link created later (new category/product, no explicit position yet)
+//     gets appended after its already-ordered siblings instead of colliding
+//     with position 0.
+//
+// Table/column names are read from `strapi.db.metadata` instead of
+// hardcoded — that's the API that actually knows what Strapi named the join
+// table/columns after its (sometimes-shortened) naming convention.
+type OrderBackfillTarget = {
+  uid: "api::category.category" | "api::product.product";
+  relationAttr: "parent" | "category";
+};
+
+const ORDER_BACKFILL_TARGETS: OrderBackfillTarget[] = [
+  { uid: "api::category.category", relationAttr: "parent" }, // -> categories_parent_lnk.category_ord
+  { uid: "api::product.product", relationAttr: "category" }, // -> products_category_lnk.product_ord
+];
+
+type LnkRow = { lnkId: number; groupId: number; ord: number | null; order: number | null; ownId: number };
+
+async function backfillOrderColumn(strapi: Core.Strapi, trx: any, target: OrderBackfillTarget): Promise<number> {
+  const ownMeta: any = strapi.db.metadata.get(target.uid);
+  const relAttr: any = ownMeta.attributes[target.relationAttr];
+  const joinTable = relAttr?.joinTable;
+  const ordColumn: string | undefined = joinTable?.inverseOrderColumnName;
+  if (!joinTable || !ordColumn) return 0;
+
+  const ownTable: string = ownMeta.tableName;
+  const ownIdColumn: string = ownMeta.attributes.id.columnName;
+  const ownOrderColumn: string = ownMeta.attributes.order.columnName;
+  const lnkTable: string = joinTable.name;
+  const ownFk: string = joinTable.joinColumn.name; // link -> this content type's own row
+  const groupFk: string = joinTable.inverseJoinColumn.name; // link -> the container it's ordered within
+
+  const rows: LnkRow[] = await trx(`${lnkTable} as lnk`)
+    .join(`${ownTable} as own`, `own.${ownIdColumn}`, `lnk.${ownFk}`)
+    .whereNotNull(`lnk.${groupFk}`)
+    .select(
+      "lnk.id as lnkId",
+      `lnk.${groupFk} as groupId`,
+      `lnk.${ordColumn} as ord`,
+      `own.${ownOrderColumn} as order`,
+      `own.${ownIdColumn} as ownId`,
+    );
+
+  const byGroup = new Map<number, LnkRow[]>();
+  for (const row of rows) {
+    const list = byGroup.get(row.groupId) ?? [];
+    list.push(row);
+    byGroup.set(row.groupId, list);
+  }
+
+  const updates: { id: number; value: number }[] = [];
+  for (const groupRows of byGroup.values()) {
+    const existingMax = groupRows.reduce((max, r) => (r.ord != null ? Math.max(max, r.ord) : max), -1);
+    // Break ties in the legacy `order` field (it has duplicates) with id, so
+    // the result is deterministic — sequential 0,1,2… per container.
+    const pending = groupRows
+      .filter((r) => r.ord == null)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.ownId - b.ownId);
+    pending.forEach((row, i) => updates.push({ id: row.lnkId, value: existingMax + 1 + i }));
+  }
+  if (updates.length === 0) return 0;
+
+  // Set-based: one CASE-based UPDATE per join table instead of one UPDATE per
+  // link row. Table/column names come from metadata above, not user input.
+  const caseSql = updates.map(() => "when ? then ?").join(" ");
+  const caseBindings = updates.flatMap((u) => [u.id, u.value]);
+  const idPlaceholders = updates.map(() => "?").join(",");
+  await trx.raw(
+    `update "${lnkTable}" set "${ordColumn}" = case "id" ${caseSql} end where "id" in (${idPlaceholders})`,
+    [...caseBindings, ...updates.map((u) => u.id)],
+  );
+  return updates.length;
+}
+
+async function revalidateWeb(strapi: Core.Strapi, tags: string[]) {
+  const base = process.env.WEB_URL;
+  const secret = process.env.REVALIDATE_SECRET;
+  if (!base || !secret) {
+    strapi.log.warn("[relation-order] WEB_URL/REVALIDATE_SECRET not set — skipping revalidate; web may show the old order for up to an hour");
+    return;
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(`${base}/api/revalidate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-revalidate-secret": secret },
+      body: JSON.stringify({ tags }),
+      signal: controller.signal,
+    });
+    if (!res.ok) strapi.log.warn(`[relation-order] revalidate call failed: HTTP ${res.status}`);
+  } catch (err) {
+    strapi.log.warn(`[relation-order] revalidate call failed: ${(err as Error).message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function backfillRelationOrder(strapi: Core.Strapi) {
+  const trx = await strapi.db.connection.transaction();
+  let totalUpdated = 0;
+  try {
+    for (const target of ORDER_BACKFILL_TARGETS) {
+      totalUpdated += await backfillOrderColumn(strapi, trx, target);
+    }
+    await trx.commit();
+  } catch (err) {
+    await trx.rollback();
+    strapi.log.error("[relation-order] backfill failed, rolled back: " + (err as Error).message);
+    return;
+  }
+  if (totalUpdated > 0) {
+    strapi.log.info(`[relation-order] backfilled ${totalUpdated} relation-order link(s)`);
+    await revalidateWeb(strapi, ["parent-categories", "categories", "products"]);
   }
 }
 
@@ -321,6 +481,7 @@ export default {
       await setPublicPermissions(strapi);
       await setVietnameseLabels(strapi);
       await setFieldDescriptions(strapi);
+      await hideUnmaintainedOrderField(strapi);
       await ensureSiteSetting(strapi);
       const existing = await strapi.db.query("api::product.product").count();
       if (process.env.SEED === "force" || (existing === 0 && process.env.SEED !== "false")) {
@@ -329,6 +490,7 @@ export default {
         strapi.log.info(`[seed] skipped (${existing} products already exist; SEED=force to reseed)`);
       }
       await ensureHomePage(strapi);
+      await backfillRelationOrder(strapi);
     } catch (err) {
       strapi.log.error("[seed] bootstrap failed: " + (err as Error).message);
     }

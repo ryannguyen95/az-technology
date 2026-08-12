@@ -13,8 +13,9 @@
     "slug": { "type": "uid", "targetField": "title" },
     "parent": {
       "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::parent-category.parent-category"
+      "relation": "manyToOne",
+      "target": "api::parent-category.parent-category",
+      "inversedBy": "categories"
     },
     "icon": {
       "type": "enumeration",
@@ -26,6 +27,12 @@
       "type": "customField",
       "customField": "plugin::ckeditor5.CKEditor",
       "options": { "preset": "defaultHtml" }
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "category"
     }
   }
 }
