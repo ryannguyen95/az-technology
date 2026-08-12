@@ -44,10 +44,12 @@ export interface Brand {
 }
 
 // Image-only hero banner: one uploaded image + a CTA link (managed in the CMS).
+// `imageMobile` is optional art direction for phones; null → fall back to `image`.
 export interface HeroBanner {
   id: string;
   title: string;
   image: string | null;
+  imageMobile?: string | null;
   ctaLabel?: string;
   ctaHref?: string;
 }

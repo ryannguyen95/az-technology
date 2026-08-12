@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSettings } from "@/lib/data";
 import type { QuoteRequestInput } from "@/lib/types";
 
 /* Lead pipeline (eng review T1): EMAIL-FIRST, Strapi best-effort.
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 }
 
 async function sendEmail(lead: Record<string, string | boolean>): Promise<boolean> {
-  const to = process.env.LEAD_TO_EMAIL ?? "nhu.trang@az-technology.vn";
+  const to = process.env.LEAD_TO_EMAIL ?? (await getSettings()).email;
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     // No provider configured yet (dev) — log so nothing is lost.
@@ -67,6 +68,8 @@ async function sendEmail(lead: Record<string, string | boolean>): Promise<boolea
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
+        // Sender is a Resend-verified domain, not CMS data — unlike `to`
+        // above, this must stay hardcoded or Resend rejects the send.
         from: "AZ Technology <web@az-technology.vn>",
         to: [to],
         subject: `[Web] Yêu cầu tư vấn: ${lead.name}`,

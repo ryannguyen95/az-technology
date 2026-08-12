@@ -6,6 +6,7 @@
   "attributes": {
     "title": { "type": "string", "required": true },
     "image": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "imageMobile": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
     "ctaLabel": { "type": "string" },
     "ctaHref": { "type": "string" },
     "order": { "type": "integer", "default": 0 },

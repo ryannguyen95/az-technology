@@ -66,7 +66,7 @@ UI nghiệm thu chuẩn **giống 100%** design, KHÔNG "gần giống".
 Use the claude_design MCP (https://api.anthropic.com/v1/design/mcp, auth via /design-login) to import this project:
 https://claude.ai/design/p/3a3417eb-ccf0-4835-b4c6-51e0da11521a?file=index.html
 ```
-- Đầu mỗi feature: sync design mới nhất từ MCP → lưu vào `design/` ở root. Chạy prototype trong `design/` trên browser (`cd design && python3 -m http.server 8899`) để hiểu UX thật.
+- Đầu mỗi feature: sync design mới nhất từ MCP → lưu vào `design/` ở root. Chạy prototype trong `design/` trên browser (`cd design && python3 -m http.server <port design prototype trong Registry>`) để hiểu UX thật.
 - Không mở/import được → báo User chạy `/design-login`, KHÔNG bịa.
 - Ràng buộc bắt buộc: cyan **#00D1FF chỉ trang trí** (WCAG — không dùng cho text/contrast quan trọng); consent PDPD ở form báo giá.
 - Softvn.vn / pacisoft.vn chỉ là cảm hứng, **KHÔNG phải nguồn design**.
@@ -91,6 +91,17 @@ https://claude.ai/design/p/3a3417eb-ccf0-4835-b4c6-51e0da11521a?file=index.html
 `scriptserve-backend-api-1` chiếm thật. Ghi chú cũ nào còn nói "AZ web = 3001" đều lỗi thời.
 
 Đổi schema Strapi → **restart Strapi** để regenerate types/API.
+
+**Worktree:** port = port gốc **+10** (worktree thứ hai +20), theo mục "Dải worktree" của sổ
+cái. Cây chính không có ngoại lệ.
+
+Kiểm bằng máy chứ đừng bằng trí nhớ:
+`python3 ~/Documents/Rynex/rynex-process/tools/check-ports.py`, rồi
+`lsof -iTCP -sTCP:LISTEN -P -n` để lộ cả port ẩn.
+
+⚠️ Bảng trên là bản chép tay cho tiện tra — **sổ cái mới là nguồn chân lý**. Đã có sự cố thật
+(2026-08-07): một agent đọc bảng port trong `CLAUDE.md` của dự án rồi start luôn, cướp port
+đang tranh chấp. Bảng lệch thì lệch im lặng; nghi ngờ thì mở sổ.
 
 ---
 
