@@ -32,6 +32,16 @@ npm run build
 yarn build
 ```
 
+## 🧪 Tests
+
+No test runner is installed in this package. Plugin-level regression tests
+are plain Node scripts (assert-only, zero extra deps) run directly with
+`node`:
+
+```
+node src/plugins/sort-manager/server/src/services/tree.test.js
+```
+
 ## ⚙️ Deployment
 
 Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
