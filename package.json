@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test",
+    "test:e2e:seed": "playwright test e2e/header-nav.spec.ts",
+    "test:e2e:strapi": "DATA_SOURCE=strapi STRAPI_URL=http://127.0.0.1:1347 playwright test e2e/banner-mobile.spec.ts e2e/logo-cms.spec.ts e2e/detail-cta.spec.ts",
+    "test:e2e": "bun run test:e2e:seed && bun run test:e2e:strapi",
     "deploy:staging": "bash deploy/build.sh staging && bash deploy/deploy.sh staging",
     "deploy:prod": "bash deploy/build.sh prod && bash deploy/deploy.sh prod"
   },

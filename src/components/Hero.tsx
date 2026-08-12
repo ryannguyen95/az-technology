@@ -67,9 +67,15 @@ export function Hero({ banners }: { banners?: HeroBanner[] }) {
 
   const i2 = Math.min(i, slides.length - 1);
   const go = (next: number) => setI((next + slides.length) % slides.length);
-  // Chỉ đổi khung sang 4:3 trên mobile khi MỌI slide đều có ảnh mobile riêng.
-  // Slide nào thiếu mà bị nhét vào khung dọc sẽ bị object-cover cắt mất nội dung.
-  const mobileFramed = slides.every((b) => !!b.imageMobile);
+  // Chỉ đổi khung sang 4:3 trên mobile khi MỌI slide CÓ ẢNH DESKTOP đều có
+  // ảnh mobile riêng. Slide placeholder (không có `image`) không có quyền
+  // chặn khung 4:3 — nó không tham gia rotation ảnh thật nên không thể bị
+  // object-cover cắt sai. Nếu không slide nào có ảnh desktop, `.every()`
+  // trên mảng rỗng sẽ mặc định `true`; chặn riêng ca đó để không bật khung
+  // 4:3 cho một dàn toàn placeholder.
+  const slidesWithImage = slides.filter((b) => !!b.image);
+  const mobileFramed =
+    slidesWithImage.length > 0 && slidesWithImage.every((b) => !!b.imageMobile);
 
   return (
     <section className="pt-7 pb-3">

@@ -1,7 +1,12 @@
 import { test, expect } from "@playwright/test";
 
-// Một slug sản phẩm có thật trong seed. Đổi nếu seed thay đổi.
-const PRODUCT_PATH = "/san-pham/microsoft-365";
+// Một slug sản phẩm có thật trong Strapi. Đổi nếu catalog thay đổi.
+// Lưu ý: "/san-pham/microsoft-365" (dùng trước đây) không còn tồn tại sau khi
+// catalog Strapi được reseed với dữ liệu thật (140 sản phẩm, slug đầy đủ hơn
+// như "microsoft-365-business-basic") — xác nhận qua Task 11 (404 khi verify
+// thủ công). Sản phẩm dưới đây có thật, đã verify tay đủ 3 CTA + không còn
+// badge cũ trước khi đổi field này.
+const PRODUCT_PATH = "/san-pham/microsoft-365-business-basic";
 
 test.describe("Trang chi tiết sản phẩm", () => {
   test("không còn badge 'Vô vàn ưu đãi'", async ({ page }) => {
