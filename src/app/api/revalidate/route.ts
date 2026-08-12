@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 
-// On-demand revalidation cho mọi thay đổi từ CMS (Strapi webhook + plugin
-// sort-manager gọi trực tiếp). Không có route này, thay đổi phải chờ hết
-// `revalidate = 3600` của từng page mới lên site.
+// On-demand revalidation cho mọi thay đổi từ CMS, bắn qua Strapi webhook
+// (config admin: mọi content type, entry.create/update/delete/publish/
+// unpublish). Không có route này, thay đổi phải chờ hết `revalidate = 3600`
+// của từng page mới lên site.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // Hai dạng payload được chấp nhận:
-//  1. Của ta   — { tags, paths }: plugin sort-manager gọi trực tiếp.
+//  1. Của ta   — { tags, paths }: gọi tay/script khi cần revalidate cụ thể.
 //  2. Của Strapi — { model, event, ... }: webhook gửi, ta tự map model → tag.
 type Payload = { tags?: string[]; paths?: string[]; model?: string };
 

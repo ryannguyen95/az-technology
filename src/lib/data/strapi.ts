@@ -36,7 +36,9 @@ const TOP_KIND: Record<string, EntryKind> = {
   "giai-phap": "solution",
 };
 
-// Danh mục cha — the 4 top-level groups (no parent).
+// Danh mục cha — the 4 top-level groups (no parent). They aren't inside any
+// relation list, so `order` (edited as a plain field, no drag-and-drop) is
+// still the source of truth here.
 async function fetchParentCategories(): Promise<CatalogEntry[]> {
   const json = await sFetch(
     `/parent-categories?pagination[pageSize]=50&sort=order:asc`,
@@ -53,22 +55,72 @@ async function fetchParentCategories(): Promise<CatalogEntry[]> {
   }));
 }
 
+// Danh mục con order now comes from admin drag-and-drop on the parent's
+// `categories` relation (oneToMany — Strapi only supports reordering there,
+// not on the manyToOne inverse side; replaces the old sort-manager plugin +
+// `order` field as source of truth). Strapi returns the relation already
+// sorted by its internal `_ord` column, so position-in-array === display
+// order. This is a light, fields-limited request separate from the full
+// `/categories` fetch below — cheap because it only asks for `slug`.
+// No `pagination`/`limit` on the nested populate: Strapi v5's REST populate
+// sanitizer REJECTS those keys on a relation populate with a 400 ("Invalid
+// key ... at categories") — verified against a live instance. Also verified
+// there's no hidden default cap either way: a populated xToMany relation
+// returns the full related set unless a limit is explicitly passed (which
+// isn't possible via query string here), so this always returns all 23
+// categories / up to ~140 products with no truncation risk.
+async function fetchCategoryOrderMap(): Promise<Map<string, number>> {
+  const json = await sFetch(
+    `/parent-categories?pagination[pageSize]=50&populate[categories][fields][0]=slug`,
+    ["parent-categories", "categories"],
+  );
+  const map = new Map<string, number>();
+  for (const p of json.data ?? []) {
+    (p.categories ?? []).forEach((c: any, i: number) => {
+      if (c.slug) map.set(c.slug, i);
+    });
+  }
+  return map;
+}
+
 // Danh mục con — each belongs to one parent category; may carry rich `description`.
 async function fetchCategories(): Promise<CatalogEntry[]> {
-  const json = await sFetch(
-    `/categories?pagination[pageSize]=200&sort=order:asc&populate[parent][fields][0]=slug`,
-    ["categories"],
-  );
+  const [json, orderMap] = await Promise.all([
+    sFetch(`/categories?pagination[pageSize]=200&populate[parent][fields][0]=slug`, ["categories"]),
+    fetchCategoryOrderMap(),
+  ]);
   return (json.data ?? []).map((c: any) => ({
     kind: "category" as EntryKind,
     slug: c.slug,
     title: c.title,
     parentSlug: c.parent?.slug ?? undefined,
-    order: c.order ?? undefined,
+    // Fallback to the (now unmaintained) `order` field only if a category
+    // is somehow missing from its parent's relation — shouldn't happen for
+    // published data with a set parent, but keeps this from crashing.
+    order: orderMap.get(c.slug) ?? c.order ?? undefined,
     icon: c.icon ?? undefined,
     summary: c.summary ?? undefined,
     description: c.description ?? undefined,
   }));
+}
+
+// Sản phẩm order — same story as categories: driven by admin drag-and-drop
+// on the category's `products` relation. Separate light request (slug only)
+// so the full `/products` fetch below doesn't need populate[order]. See
+// fetchCategoryOrderMap() above for why there's no pagination/limit on the
+// nested populate — Strapi rejects it, and it isn't needed anyway.
+async function fetchProductOrderMap(): Promise<Map<string, number>> {
+  const json = await sFetch(
+    `/categories?pagination[pageSize]=200&populate[products][fields][0]=slug`,
+    ["categories", "products"],
+  );
+  const map = new Map<string, number>();
+  for (const c of json.data ?? []) {
+    (c.products ?? []).forEach((p: any, i: number) => {
+      if (p.slug) map.set(p.slug, i);
+    });
+  }
+  return map;
 }
 
 const PRODUCT_POPULATE =
@@ -77,7 +129,10 @@ const PRODUCT_POPULATE =
   "&populate[brands][fields][0]=slug&populate[highlights]=true&populate[seo]=true";
 
 async function fetchProducts(catParent: Map<string, string | undefined>): Promise<CatalogEntry[]> {
-  const json = await sFetch(`/products?pagination[pageSize]=500&sort=order:asc&${PRODUCT_POPULATE}`, ["products"]);
+  const [json, orderMap] = await Promise.all([
+    sFetch(`/products?pagination[pageSize]=500&${PRODUCT_POPULATE}`, ["products"]),
+    fetchProductOrderMap(),
+  ]);
   const topOf = (slug?: string) => {
     let s = slug;
     while (s && catParent.get(s)) s = catParent.get(s);
@@ -92,7 +147,9 @@ async function fetchProducts(catParent: Map<string, string | undefined>): Promis
       title: p.title,
       headline: p.headline ?? undefined,
       parentSlug: catSlug,
-      order: p.order ?? undefined,
+      // Fallback to the (now unmaintained) `order` field only if a product
+      // is somehow missing from its category's relation.
+      order: orderMap.get(p.slug) ?? p.order ?? undefined,
       icon: p.icon ?? undefined,
       tone: p.tone ?? undefined,
       badge: p.badge ?? undefined,

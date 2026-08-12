@@ -1,11 +1,6 @@
 export default ({ env }) => ({
   ckeditor5: { enabled: true },
 
-  "sort-manager": {
-    enabled: true,
-    resolve: "./src/plugins/sort-manager",
-  },
-
   // Media uploads. When R2 creds are present, store files in Cloudflare R2
   // (S3-compatible) and serve them from R2_PUBLIC_URL. Otherwise the key is
   // omitted entirely and Strapi falls back to its local disk provider (files

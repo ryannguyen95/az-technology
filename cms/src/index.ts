@@ -6,11 +6,12 @@ import { BRANDS, CATEGORIES, HEROES, HOME_CATEGORY_LIST, HOME_SECTIONS, PARENT_C
 const VI_LABELS: Record<string, Record<string, string>> = {
   "api::parent-category.parent-category": {
     title: "Tên danh mục cha", slug: "Đường dẫn (slug)",
-    icon: "Biểu tượng", order: "Thứ tự", summary: "Tóm tắt",
+    icon: "Biểu tượng", order: "Thứ tự", summary: "Tóm tắt", categories: "Danh mục con",
   },
   "api::category.category": {
     title: "Tên danh mục con", slug: "Đường dẫn (slug)", parent: "Danh mục cha",
     icon: "Biểu tượng", order: "Thứ tự", summary: "Tóm tắt", description: "Nội dung trang danh mục",
+    products: "Sản phẩm",
   },
   "api::product.product": {
     title: "Tên sản phẩm", headline: "Tiêu đề trang chi tiết", slug: "Đường dẫn (slug)",
