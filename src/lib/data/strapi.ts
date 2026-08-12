@@ -84,9 +84,13 @@ async function fetchCategoryOrderMap(): Promise<Map<string, number>> {
 }
 
 // Danh mục con — each belongs to one parent category; may carry rich `description`.
+// `sort=id:asc` pins this base list's row order across engines (SQLite vs
+// Postgres return unsorted rows differently) — display order itself comes
+// from `orderMap` above, but Array.prototype.sort() downstream is stable, so
+// an undefined base order would still leak into ties.
 async function fetchCategories(): Promise<CatalogEntry[]> {
   const [json, orderMap] = await Promise.all([
-    sFetch(`/categories?pagination[pageSize]=200&populate[parent][fields][0]=slug`, ["categories"]),
+    sFetch(`/categories?pagination[pageSize]=200&sort=id:asc&populate[parent][fields][0]=slug`, ["categories"]),
     fetchCategoryOrderMap(),
   ]);
   return (json.data ?? []).map((c: any) => ({
@@ -128,9 +132,11 @@ const PRODUCT_POPULATE =
   "&populate[coverImage][fields][0]=url&populate[gallery][fields][0]=url" +
   "&populate[brands][fields][0]=slug&populate[highlights]=true&populate[seo]=true";
 
+// `sort=id:asc` — same reasoning as fetchCategories() above: pin the base
+// list's row order deterministically across DB engines.
 async function fetchProducts(catParent: Map<string, string | undefined>): Promise<CatalogEntry[]> {
   const [json, orderMap] = await Promise.all([
-    sFetch(`/products?pagination[pageSize]=500&${PRODUCT_POPULATE}`, ["products"]),
+    sFetch(`/products?pagination[pageSize]=500&sort=id:asc&${PRODUCT_POPULATE}`, ["products"]),
     fetchProductOrderMap(),
   ]);
   const topOf = (slug?: string) => {
