@@ -18,9 +18,9 @@ Internet ──443/80──▶ nginx ──▶ 127.0.0.1:3000  Next.js standalon
 - `az-technology.vn` và `www.az-technology.vn` → nginx → Next (`:3000`).
 - `admin.az-technology.vn` → nginx → Strapi (`:1337`).
 - Next và Strapi **không** còn expose trực tiếp ra ngoài trên cổng chuẩn:
-  Next bind `127.0.0.1` (xem `run-web.sh`); Strapi vẫn `HOST=0.0.0.0` — xem
-  giải thích ở mục "Vì sao Strapi vẫn HOST=0.0.0.0" bên dưới. nginx là thứ
-  duy nhất nên public trên `80`/`443`.
+  Next bind `127.0.0.1` (xem `run-web.sh`); Strapi vẫn `HOST=0.0.0.0` nhưng
+  cổng `1337` bị `ufw` chặn ra ngoài — xem mục "Strapi `HOST=0.0.0.0` — đã
+  chặn bằng `ufw`" bên dưới. nginx là thứ duy nhất public trên `80`/`443`.
 - Một cert Let's Encrypt duy nhất bao cả 3 tên (apex + `www` + `admin`), cấp
   qua `certbot --nginx`.
 
@@ -100,19 +100,30 @@ và dừng) · `LETSENCRYPT_EMAIL` (bắt buộc cho `setup-ssl.sh`).
 | A | `www.az-technology.vn` | `167.86.107.70` |
 | A | `admin.az-technology.vn` | `167.86.107.70` |
 
-### Vì sao Strapi vẫn `HOST=0.0.0.0`
+### Strapi `HOST=0.0.0.0` — đã chặn bằng `ufw`, không đổi `HOST`
 
-Next (`run-web.sh`) đã đổi sang bind `127.0.0.1` vì nó chắc chắn đứng sau
-nginx (cổng 80 giờ do nginx giữ). Strapi thì **cố ý giữ nguyên**
-`HOST=0.0.0.0`: đổi sang loopback sẽ chặn hẳn truy cập trực tiếp qua
-`http://167.86.107.70:1337` — hữu ích khi debug hoặc khi DNS/SSL cho
-`admin.az-technology.vn` chưa xong — và vì `ufw` trên server hiện **inactive**
-nên việc "chặn" này chỉ có tác dụng thật khi bật `ufw` kèm rule đóng `1337`
-ra ngoài. Không có ufw, đổi `HOST` không tăng thêm bảo mật thực sự, chỉ đổi
-hành vi mà chưa kiểm chứng được. Khuyến nghị: **bật `ufw` (allow 80,443,22;
-deny 1337,3000 from ngoài)** như một bước riêng, làm chủ động (không nằm
-trong các script này) — sau đó có thể cân nhắc siết `HOST=127.0.0.1` cho
-Strapi luôn.
+Next (`run-web.sh`) bind `127.0.0.1` vì nó chắc chắn đứng sau nginx. Strapi
+giữ `HOST=0.0.0.0`, nhưng **cổng `1337` không còn ra được internet**: từ
+2026-08-13 server bật `ufw` chỉ mở `22/80/443`.
+
+Trước đó `1337` phơi thẳng ra `http://167.86.107.70:1337/admin` bằng **HTTP
+trần** — ai đăng nhập qua URL đó là gửi mật khẩu admin dạng chữ thô, và nó
+lách qua toàn bộ HTTPS mà certbot vừa dựng. Lý do cũ ("giữ mở để vào trực
+tiếp bằng IP khi DNS/SSL chưa xong") hết hiệu lực ngay khi
+`admin.az-technology.vn` chạy.
+
+Rule hiện tại (dựng thủ công, KHÔNG nằm trong script deploy):
+
+```bash
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw --force enable
+ufw status verbose        # kiểm lại
+```
+
+Muốn debug Strapi trực tiếp thì đi qua ssh tunnel, đừng mở lại cổng:
+
+```bash
+ssh -i "$CONTABO_KEY" -N -L 127.0.0.1:21337:127.0.0.1:1337 "$CONTABO_SSH"
+```
 
 ## Lệnh trên server
 
