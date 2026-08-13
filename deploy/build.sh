@@ -27,6 +27,17 @@ SITE_URL="${SITE_URL%\'}"; SITE_URL="${SITE_URL#\'}"       # bỏ nháy đơn n�
 SITE_URL="$(printf '%s' "$SITE_URL" | xargs)"              # trim khoảng trắng
 [ -n "$SITE_URL" ] || { echo "❌ thiếu NEXT_PUBLIC_SITE_URL trong $WEB_ENV"; exit 1; }
 
+# Media URL nướng cứng vào HTML prerender. Nó PHẢI là host công khai mà trình
+# duyệt (và Next image optimizer trên server) gọi được — không phải cái
+# STRAPI_URL dùng để lấy data lúc build (thường là localhost hoặc ssh tunnel).
+# Thiếu biến này thì mọi <img> trong trang tĩnh trỏ về loopback của máy build và
+# optimizer trả 400 vì `remotePatterns` ở production chặn loopback.
+STRAPI_PUBLIC="$(grep -E '^STRAPI_PUBLIC_URL=' "$WEB_ENV" | head -1 | cut -d= -f2-)"
+STRAPI_PUBLIC="${STRAPI_PUBLIC%\"}"; STRAPI_PUBLIC="${STRAPI_PUBLIC#\"}"
+STRAPI_PUBLIC="${STRAPI_PUBLIC%\'}"; STRAPI_PUBLIC="${STRAPI_PUBLIC#\'}"
+STRAPI_PUBLIC="$(printf '%s' "$STRAPI_PUBLIC" | xargs)"
+[ -n "$STRAPI_PUBLIC" ] || { echo "❌ thiếu STRAPI_PUBLIC_URL trong $WEB_ENV"; exit 1; }
+
 # Build đọc content CMS thật để prerender SSG → cần Strapi trả lời tại STRAPI_URL.
 STRAPI_BUILD_URL="${STRAPI_URL:-http://localhost:1337}"
 if ! curl -sf -o /dev/null --max-time 4 "$STRAPI_BUILD_URL/_health"; then
@@ -42,12 +53,14 @@ echo "=============================="
 echo " Building AZ ($ENV)"
 echo " site  $SITE_URL"
 echo " cms   $STRAPI_BUILD_URL (build-time data)"
+echo " media $STRAPI_PUBLIC (baked into prerendered <img>)"
 echo "=============================="
 
 echo "[1/2] Frontend (Next standalone)…"
 DATA_SOURCE=strapi \
 NEXT_PUBLIC_SITE_URL="$SITE_URL" \
 STRAPI_URL="$STRAPI_BUILD_URL" \
+STRAPI_PUBLIC_URL="$STRAPI_PUBLIC" \
   npm run build
 [ -f .next/standalone/server.js ] || { echo "❌ standalone server.js missing"; exit 1; }
 

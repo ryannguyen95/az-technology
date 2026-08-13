@@ -87,7 +87,11 @@ else
 
   TMP_NGINX_CONF="$(mktemp)"
   trap 'rm -f "$TMP_NGINX_CONF"' EXIT
-  sed -e "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" -e "s/ADMIN_DOMAIN_PLACEHOLDER/$ADMIN_DOMAIN/g" \
+  # ADMIN_DOMAIN_PLACEHOLDER must be substituted FIRST: it contains
+  # DOMAIN_PLACEHOLDER as a substring, so the reverse order turns
+  # "ADMIN_DOMAIN_PLACEHOLDER" into "ADMIN_<domain>" and the admin vhost
+  # silently never matches (nginx answers 404 from the default server).
+  sed -e "s/ADMIN_DOMAIN_PLACEHOLDER/$ADMIN_DOMAIN/g" -e "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" \
     deploy/nginx.conf > "$TMP_NGINX_CONF"
 
   # Certbot rewrites /etc/nginx/sites-available/az in place to add the :443
